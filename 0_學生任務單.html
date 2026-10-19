@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 7 任務單｜讓按鈕自己去問 AI</title>
+<style>
+  :root { --main: #6a3e8a; --soft: #f3eef7; --line: #d9cde5; --ink: #22202a; --ok: #1f8a70; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Microsoft JhengHei", "PingFang TC", sans-serif; color: var(--ink); background: var(--soft); line-height: 1.7; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
+  header { background: var(--main); color: #fff; border-radius: 16px; padding: 22px 26px; margin-bottom: 16px; }
+  header h1 { margin: 0; font-size: 26px; }
+  header p { margin: 6px 0 0; opacity: .92; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; margin-bottom: 16px; }
+  h2 { margin: 0 0 4px; font-size: 20px; color: var(--main); }
+  h3 { margin: 16px 0 4px; font-size: 16px; }
+  .time { font-size: 13px; color: #888; margin-bottom: 10px; }
+  ol, ul { padding-left: 22px; margin: 8px 0; }
+  code { background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+  .prompt { position: relative; background: #22202a; color: #f3eef7; border-radius: 10px; padding: 12px 72px 12px 14px; margin: 10px 0; white-space: pre-wrap; font-size: 14px; }
+  .prompt button { position: absolute; top: 8px; right: 8px; }
+  button { font: inherit; font-size: 13px; border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer; background: var(--main); color: #fff; }
+  button.light { background: var(--soft); color: var(--main); }
+  .rec { background: #f9f6fc; border: 2px dashed #b9a6cc; border-radius: 12px; padding: 12px 16px; margin-top: 12px; }
+  .rec b { color: var(--main); }
+  textarea, input[type=text] { font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-top: 4px; width: 100%; }
+  textarea { min-height: 70px; resize: vertical; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+  th { background: var(--soft); }
+  .tip { font-size: 13px; color: #4d4659; background: var(--soft); border-radius: 8px; padding: 8px 12px; margin-top: 8px; }
+  .warn { font-size: 14px; background: #fff1f0; border-left: 4px solid #d9534f; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
+  .check label { display: block; margin: 2px 0; }
+  .ext { border-left: 4px solid var(--main); padding: 6px 12px; margin: 10px 0; background: #fbf9fd; }
+  .star { color: #d99a00; }
+  .kbd { font-family: monospace; background: #eee; border: 1px solid #ccc; border-radius: 4px; padding: 0 5px; }
+  #saved { font-size: 13px; color: var(--ok); }
+  .bar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 10px 16px; display: flex; gap: 10px; align-items: center; justify-content: center; }
+  @media print { .bar, .prompt button { display: none; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Day 7｜讓按鈕自己去問 AI</h1>
+  <p>上次你按「🧩 組好指令」，然後自己複製、自己貼給 AI、自己貼回來。很多人說：<b>「還是很煩。」</b><br>
+  今天做三件事：①把工作台<b>放上網路</b>，手機也打得開。②按鈕<b>自己去問 AI</b>，不用你跑腿；老師的額度用完，自動換你自己的 Gemini。③多請兩個 AI 進來：一個<b>幫你改</b>，一個<b>幫你挑毛病</b>。</p>
+</header>
+
+<div class="card">
+  <b>這張任務單怎麼用</b>
+  <ul>
+    <li>黑色框框是要貼給 Codex 的話，按「複製」就好。<code>【 】</code>裡的字要換成你自己的。</li>
+    <li>虛線框框是你的紀錄，打字會自動存在這台電腦的瀏覽器裡。</li>
+    <li>Codex 每做完一步，<b>先用 Chrome 打開 <code>index.html</code> 試試</b>，確定可以用，再做下一步。</li>
+    <li>最後一節按最下面的「複製全部紀錄」，交到作業繳交區。</li>
+  </ul>
+  <div class="warn"><b>今天最重要的一條規則：</b>今天會有兩把「AI 金鑰」：老師發的 OpenRouter（全班共用），和你自己的 Gemini。金鑰<b>只能貼在工作台的 ⚙ 設定裡</b>。不貼給 Codex、不貼到班群、不寫進任何檔案。老師那把外流，全班一起沒得用；你那把外流，別人用你的額度。</div>
+</div>
+
+<!-- 第 1 節 -->
+<div class="card">
+  <h2>第 1 節｜把工作台放上網路（GitHub 網頁版）</h2>
+  <div class="time">09:10–10:00</div>
+  <p><b>GitHub</b> 是什麼？一個放檔案的雲端倉庫。它有一個免費的功能叫 <b>Pages</b>：把 <code>index.html</code> 放上去，就變成一個網址，手機也打得開。</p>
+  <p>今天不用打指令，全部在網頁上點。</p>
+
+  <h3>1. 建一個倉庫（repository）</h3>
+  <ol>
+    <li>登入 <a href="https://github.com" target="_blank">github.com</a>。右上角「＋」→ <b>New repository</b>。</li>
+    <li>Repository name 填 <code>my-studio</code>。</li>
+    <li>選 <b>Public</b>（公開）。<b>這就是為什麼金鑰不能進檔案：公開＝全世界看得到。</b></li>
+    <li>其他都不要勾，按綠色 <b>Create repository</b>。</li>
+  </ol>
+
+  <h3>2. 把 index.html 拖上去</h3>
+  <ol>
+    <li>新倉庫的頁面上，找「<b>uploading an existing file</b>」這個連結，點它。（或右上「Add file ▾」→「Upload files」。）</li>
+    <li>打開你電腦的 <code>my-studio</code> 資料夾，把 <b><code>index.html</code> 這一個檔案</b>拖進網頁。（只要這個檔案，不要拖整個資料夾、不要拖品牌規格。）</li>
+    <li>往下捲，按綠色 <b>Commit changes</b>。</li>
+  </ol>
+
+  <h3>3. 打開 Pages，拿到網址</h3>
+  <ol>
+    <li>倉庫上方的分頁點 <b>Settings</b> → 左邊選單點 <b>Pages</b>。</li>
+    <li>「Build and deployment」→ Source 選 <b>Deploy from a branch</b>。</li>
+    <li>Branch 選 <b>main</b>，旁邊資料夾選 <b>/ (root)</b>，按 <b>Save</b>。</li>
+    <li>等 1～3 分鐘，重新整理這一頁，上面會出現「Your site is live at …」。你的網址長這樣：<code>https://你的帳號.github.io/my-studio/</code></li>
+  </ol>
+  <div class="tip">打開是 404？再等一分鐘。等了五分鐘還是 404？看檔名是不是正好叫 <code>index.html</code>（小寫、沒有多的字）。</div>
+
+  <h3>4. 手機打開</h3>
+  <ol>
+    <li>用手機打開你的網址。</li>
+    <li>你會發現：<b>⚙ 設定是空的、存過的貼文也不在。</b>為什麼？</li>
+  </ol>
+  <div class="tip"><b>答案：</b>設定和貼文是存在「瀏覽器」裡的，而且是<b>跟著網址走</b>的。電腦上的 <code>index.html</code> 是一個網址，<code>github.io</code> 是另一個網址，手機又是另一台裝置。所以上網路的版本要<b>再貼一次設定</b>。（今天第 7 節會做。）</div>
+
+  <div class="rec check">
+    <b>✏️ 第 1 節</b>
+    <label><input type="checkbox" data-k="a_1"> 倉庫建好了（Public）</label>
+    <label><input type="checkbox" data-k="a_2"> index.html 上傳成功</label>
+    <label><input type="checkbox" data-k="a_3"> 電腦打得開我的網址</label>
+    <label><input type="checkbox" data-k="a_4"> 手機也打得開</label>
+    <b>我的網址</b>
+    <input type="text" data-k="a_url" placeholder="https://帳號.github.io/my-studio/">
+    <b>我用手機打開同學的網址，他的跟我的差在哪？</b>
+    <textarea data-k="a_peer"></textarea>
+  </div>
+</div>
+
+<!-- 第 2 節 -->
+<div class="card">
+  <h2>第 2 節｜改一點再上傳，然後回到上一版</h2>
+  <div class="time">10:10–11:00</div>
+  <p>上次有人說「好的版本改一改就不見了」。GitHub 的另一個好處：<b>每次上傳，它都幫你留一個存檔點</b>，像遊戲存檔。壞掉了，可以回到上一版。</p>
+
+  <h3>1. 改一個小地方</h3>
+  <div class="prompt">請把標題列的標題，在品牌名稱後面加上「v2」。其他地方不要動。<button class="light copy">複製</button></div>
+  <p>Chrome 打開 <code>index.html</code>，看到 v2 再往下。</p>
+
+  <h3>2. 再上傳一次（同一個檔名，就是蓋過去）</h3>
+  <ol>
+    <li>倉庫首頁 → Add file ▾ → Upload files → 拖 <code>index.html</code> → Commit changes。</li>
+    <li>等 1 分鐘，打開你的網址，按 <span class="kbd">Ctrl</span>＋<span class="kbd">F5</span>（強制重新整理）。看到 v2 了嗎？</li>
+  </ol>
+
+  <h3>3. 看歷史，回到上一版</h3>
+  <ol>
+    <li>倉庫首頁點 <code>index.html</code> → 右上角 <b>History</b>。你會看到兩筆（兩個存檔點）。</li>
+    <li>點<b>舊的那一筆</b>右邊的 <b>&lt;&gt;</b> 圖示（Browse the repository at this point）。</li>
+    <li>點 <code>index.html</code> → 右上角的 <b>⤓ Download raw file</b>。這就是舊版，下載到電腦。</li>
+    <li>把這個舊版再上傳一次（蓋過去）。等一分鐘，網址上的 v2 不見了嗎？</li>
+    <li>練習完，把電腦裡的新版（有 v2 的）再上傳回去。</li>
+  </ol>
+  <div class="tip">記住這個順序：<b>History → 點舊的 → 下載 → 再上傳。</b>以後改壞了，一分鐘救回來。</div>
+
+  <div class="rec check">
+    <b>✏️ 第 2 節</b>
+    <label><input type="checkbox" data-k="b_1"> 第二版上傳成功，網址上看得到 v2</label>
+    <label><input type="checkbox" data-k="b_2"> History 看得到兩筆</label>
+    <label><input type="checkbox" data-k="b_3"> 成功回到上一版，再回來</label>
+    <b>用一句話說：「上傳到 GitHub」等於什麼？</b>
+    <textarea data-k="b_say" placeholder="例：等於存一個遊戲存檔點，而且全世界看得到"></textarea>
+  </div>
+  <div class="ext"><span class="star">⭐</span> <b>快的人：</b>叫 Codex 用 git 指令上傳，不用拖檔案。（電腦要先裝 git；沒裝的話這題跳過。）
+    <div class="prompt">請幫我把這個資料夾用 git 連到我的 GitHub 倉庫 https://github.com/【我的帳號】/my-studio，只上傳 index.html，不要上傳其他檔案（用 .gitignore 擋掉）。一步一步告訴我要做什麼，需要我登入的地方說清楚。<button class="light copy">複製</button></div></div>
+</div>
+
+<!-- 第 3 節 -->
+<div class="card">
+  <h2>第 3 節｜金鑰欄＋「✨ 讓 AI 寫」</h2>
+  <div class="time">11:10–12:00</div>
+  <p>上次是叫外送，但你自己跑腿。今天換真的外送員：按鈕自己把指令送去給 AI，自己把貼文拿回來。</p>
+
+  <h3>AI 公司怎麼認人？金鑰。</h3>
+  <p><b>金鑰</b>（API key）像一張<b>會員卡號</b>：誰拿到，誰就能刷這張卡。我們全班共用一張，老師儲值了 200 美金。所以：</p>
+  <table>
+    <tr><th>可以</th><th>不可以</th></tr>
+    <tr><td>貼在工作台的 ⚙ 設定裡（存在你的瀏覽器）</td><td>貼給 Codex、貼到班群、寫進 index.html、截圖裡出現</td></tr>
+  </table>
+
+  <h3>叫 AI 一次，長什麼樣子？</h3>
+  <table>
+    <tr><th style="width:90px">送出去</th><td>網址 <code>https://openrouter.ai/api/v1/chat/completions</code>＋金鑰（放在 header）＋模型名稱＋你的訊息（就是「🧩 組好指令」那段話）</td></tr>
+    <tr><th>回來</th><td>一包資料（JSON）。貼文在 <code>choices[0].message.content</code> 裡。還有一個 <code>usage</code>，寫這次用了多少。</td></tr>
+  </table>
+  <p>就這樣。Codex 知道怎麼寫，你只要跟它講清楚要什麼。下午第 4 節會再加第二組 Gemini 當備胎，用的是同一種寫法。</p>
+
+  <div class="prompt">請幫工作台加「直接叫 AI 寫」的功能，用 OpenRouter 的 API：
+1. ⚙ 設定視窗加一格「AI 金鑰」（type=password），跟品牌規格一樣存在 localStorage。金鑰絕對不能寫進 index.html。
+2. 素材卡下面加一個「✨ 讓 AI 寫」按鈕。按了以後：
+   - 把「🧩 組好指令」組出來的那段話，當成訊息送給 AI。
+   - 用 fetch 送 POST 到 https://openrouter.ai/api/v1/chat/completions
+     headers：Authorization: Bearer 金鑰、Content-Type: application/json
+     body（JSON）：{ "model": "deepseek/deepseek-v4.1-flash", "messages": [ { "role": "user", "content": 那段話 } ] }
+   - 回來的 JSON，文字在 choices[0].message.content。
+   - 把這段文字照【FB】【IG】【LINE】的標題分到各平台分頁（跟「📥 貼回」一樣的做法），有【要問我的】就顯示在按鈕下面。
+   - 等待的時候，按鈕下面顯示「AI 寫作中…」。
+3. 模型名稱寫在 JavaScript 最上面的常數，方便我改。
+4. 原本的 🧩 組好指令 和 📥 貼回 留著，當 AI 連不上時的備案。
+5. 「🧩 組好指令」的【規則】最上面加一條：「一律用台灣的繁體中文和台灣用語。不要出現簡體字，也不要用大陸用語（例如：視頻→影片、質量→品質、優化→改善、信息→訊息、網絡→網路、用戶→客人或使用者）。」
+其他地方不要動。<button class="light copy">複製</button></div>
+  <div class="warn">Codex 問你「金鑰是多少，我幫你測試」→ <b>不要給。</b>跟它說：「金鑰我自己貼在設定裡，你不用測。」</div>
+
+  <h3>老師發金鑰（11:35 左右）</h3>
+  <ol>
+    <li>老師會投影一次。你打開工作台 → ⚙ 設定 → 貼進「AI 金鑰」→ 儲存。</li>
+    <li>素材卡填一則你品牌真的會發的內容（記得填「先不要講的」）。</li>
+    <li>按 <b>✨ 讓 AI 寫</b>。等 10～30 秒。</li>
+    <li>三個平台自己填好了嗎？手機預覽看一下。</li>
+  </ol>
+
+  <h3>自己檢查：金鑰真的不在檔案裡？</h3>
+  <p>用 Chrome 打開 <code>index.html</code>，按 <span class="kbd">Ctrl</span>＋<span class="kbd">U</span>（看原始碼），再按 <span class="kbd">Ctrl</span>＋<span class="kbd">F</span> 搜 <code>sk-or</code>。要是 <b>0 個</b>。（下午加了 Gemini 以後，也要用<b>你 Gemini 金鑰的前 6 個字</b>搜一次。）</p>
+
+  <div class="rec check">
+    <b>✏️ 第 3 節</b>
+    <label><input type="checkbox" data-k="c_1"> ⚙ 設定裡有金鑰欄，存得住</label>
+    <label><input type="checkbox" data-k="c_2"> 按 ✨，貼文真的回來了</label>
+    <label><input type="checkbox" data-k="c_3"> 三個平台自動分好</label>
+    <label><input type="checkbox" data-k="c_4"> 原始碼搜 sk-or 是 0 個</label>
+    <b>跟 Day 6 比：少了哪幾個動作？等了幾秒？</b>
+    <textarea data-k="c_cmp" placeholder="例：少了複製、開 Codex、貼、等、貼回，5 個動作；等了 15 秒"></textarea>
+  </div>
+  <div class="warn">12:00 還沒通？舉手拿「第4節起點」。下午三節都要用到 ✨，不要卡在這裡。</div>
+  <details>
+    <summary>拿到老師給的「起點檔」的人，貼這段把它換成自己的品牌</summary>
+    <div class="prompt">請讀 品牌規格.md，把 index.html 換成我的品牌：
+- JavaScript 最上面的 BRAND：品牌名稱和帳號名稱。
+- PLATFORMS：只留我要用的平台（可以用 FB、IG、LINE、Threads）。
+- FIELDS：換成我上次的素材卡欄位（看 my-studio_Day6完成 裡的 index.html，把 FIELDS 整段搬過來）。
+- CSS 最上面的 --main 換成我的主色，--bg 用主色很淡的版本。
+其他地方不要動。<button class="light copy">複製</button></div>
+    <p class="tip">換好以後，⚙ 設定要重貼：品牌規格、檢查清單、金鑰。</p>
+  </details>
+</div>
+
+<!-- 第 4 節 -->
+<div class="card">
+  <h2>第 4 節｜讓它可靠：出錯講人話＋第二組備胎（Gemini）</h2>
+  <div class="time">13:10–14:00</div>
+  <p>上午的按鈕，順的時候很順。但是：金鑰貼錯呢？全班同時按呢？<b>200 美金用完呢？</b>現在按下去只會「沒反應」。</p>
+  <p>這一節做兩件事：①出錯的時候，用人話告訴你。②第一組 OpenRouter 不行了，<b>自動換第二組 Gemini</b>，你不會卡住。</p>
+
+  <h3>1. 先拿第二組金鑰：Gemini（你自己的）</h3>
+  <table>
+    <tr><th></th><th>第一組 OpenRouter</th><th>第二組 Gemini</th></tr>
+    <tr><td>誰的</td><td>老師儲值，全班共用</td><td><b>你自己的</b> Google 帳號，自己去拿</td></tr>
+    <tr><td>順序</td><td><b>先用</b></td><td>第一組失敗才用（備胎）</td></tr>
+    <tr><td>去哪裡拿</td><td>老師上課發</td><td><b>aistudio.google.com/apikey</b>（以後自己拿）</td></tr>
+  </table>
+  <ol>
+    <li>打開 <a href="https://aistudio.google.com/apikey" target="_blank"><b>aistudio.google.com/apikey</b></a>。<b>這個網址記下來</b>，以後還會用到。</li>
+    <li>用<b>買了 Gemini Pro 方案的那個 Google 帳號</b>登入，第一次要同意條款。</li>
+    <li>按「<b>Create API key</b>」→ 複製那一長串（可能只顯示一次）。</li>
+    <li>先貼在自己的記事本，等一下工作台改好了再貼進 ⚙ 設定。</li>
+  </ol>
+  <div class="warn"><b>Pro 方案 ≠ API 金鑰。</b>你們的 Gemini Pro 方案（三個月）是給 <b>Gemini App</b> 和 AI Studio 網頁聊天用的。工作台用的 <b>API 金鑰走的是免費額度</b>，只能用 Flash、Flash-Lite，叫不動 Pro、Argon。好處是：三個月方案到期，<b>金鑰照樣能用</b>。</div>
+  <div class="tip">型號怎麼選、額度多少、Pro 方案怎麼搭配 → 看起點包的 <code>Gemini金鑰怎麼拿_型號怎麼選.md</code>（<b>這張帶回家</b>）。先記一句：<b>預設 <code>gemini-3.8-flash</code>，小改用 <code>gemini-3.5-flash-lite</code>。</b></div>
+  <div class="tip">免費額度的金鑰送出去的內容，Google 可以拿去改進產品。練習的貼文沒關係；客戶的機密、個資不要丟進去。</div>
+
+  <h3>2. 出錯要講人話</h3>
+  <table>
+    <tr><th>會發生什麼</th><th>OpenRouter 回</th><th>Gemini 回</th><th>要顯示給人看的話</th></tr>
+    <tr><td>金鑰貼錯</td><td>401</td><td>400（訊息有 API key）</td><td>金鑰不對</td></tr>
+    <tr><td>200 美金用完</td><td>402</td><td>－</td><td>全班的額度用完了</td></tr>
+    <tr><td>模型名稱打錯</td><td>404</td><td>404</td><td>模型名稱不對</td></tr>
+    <tr><td>用太兇</td><td>429（太多人同時用）</td><td>429（免費額度用完）</td><td>等一下再按</td></tr>
+    <tr><td>沒網路／太慢</td><td colspan="2">連不上／超過 60 秒</td><td>連不到／等太久</td></tr>
+  </table>
+
+  <div class="prompt">請讓「✨ 讓 AI 寫」更可靠，並加上第二組 AI 當備胎：
+1. 按下去以後，按鈕變灰、不能再按，文字變成「✨ AI 寫作中…」；回來以後恢復。
+2. ⚙ 設定分成兩組：
+   - 第一組 OpenRouter：原本的金鑰，再加：
+     「模型」下拉選單，分三組：DeepSeek（deepseek/deepseek-v4.1-flash 預設、deepseek/deepseek-v4-pro、deepseek/deepseek-v3.2）、Kimi（moonshotai/kimi-k2.6、moonshotai/kimi-k2.5、moonshotai/kimi-k3）、MiniMax（minimax/minimax-m3、minimax/minimax-m2.7、minimax/minimax-m2.5）。
+     一格「或自己打模型名稱」：有填就用這個。
+     「思考」下拉：少想一點 low（預設）／多想一點 medium／想很久 high。
+   - 第二組 Gemini：一格「Gemini 金鑰」（type=password），一個「Gemini 模型」下拉選單：gemini-3.8-flash（預設）、gemini-3.6-flash、gemini-3.5-flash-lite、gemini-3.1-flash-lite。
+   - 一個「先用哪一組」下拉：先用 OpenRouter 失敗了自動換 Gemini（預設）／只用 Gemini／只用 OpenRouter。
+   全部存在 localStorage，金鑰絕對不能寫進 index.html。
+3. Gemini 的呼叫方式跟 OpenRouter 一樣（OpenAI 相容格式），只換：
+   網址 https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+   Authorization: Bearer Gemini金鑰；model 用選的 Gemini 模型；body 不要加 max_tokens 和 usage。
+   回來的文字一樣在 choices[0].message.content。Gemini 出錯時回來的 JSON 是陣列，要先拿 [0]。
+4. 寫一個共用的「問 AI」函式：照順序先問第一組，失敗（任何原因）而且有填 Gemini 金鑰，就自動問 Gemini。✨ 之後的功能都用這個函式。
+5. 出錯要用人話，顯示在按鈕下面（紅字），要說是哪一組錯：
+   - 兩組都沒填金鑰：「還沒填金鑰。按 ⚙ 設定。」
+   - OpenRouter 401「金鑰不對」、402「全班的額度用完了」、404「模型名稱打錯了」、429「太多人同時在用」。
+   - Gemini 400 而且訊息有 API key「金鑰不對」、403「沒有權限」、404「模型名稱不對，或免費版不能用」、429「免費額度用完了」。
+   - 連不上「連不到（檢查網路）」；超過 60 秒「等太久」（用 AbortController）。
+   - 兩組都失敗：兩個原因都列出來。只有第一組、沒填 Gemini：多一句「沒有備胎」。
+   - 回來的文字找不到【平台】標題：顯示原文，提醒可以用 📥 貼回 手動分。
+6. 換了備胎要提醒：「⚠️ OpenRouter：（原因）。這次改用 Gemini。」
+7. OpenRouter 送出時 body 加："max_tokens": 4000、"reasoning": { "effort": 設定的思考, "exclude": true }、"usage": { "include": true }。按鈕下面顯示「這次用 （哪一組）：N tokens 約 $X｜今天 OpenRouter M 次 $Y、Gemini K 次」。累積存在 localStorage，隔天歸零。
+8. 回來的文字如果有 &lt;think&gt;…&lt;/think&gt;，把那一段拿掉。如果文字是空的、而且 finish_reason 是 "length"，顯示「想太久，字數用完了（⚙ 設定把思考調成少想一點）」；有文字但 finish_reason 是 "length"，提醒「回覆可能被切掉了」。
+其他地方不要動。<button class="light copy">複製</button></div>
+  <div class="tip">改好以後：⚙ 設定 → 第二組貼上你的 Gemini 金鑰 → 儲存。</div>
+  <div class="tip"><b>第一組的模型怎麼選？</b>平常用預設的 <code>DeepSeek V4.1 Flash</code>：最便宜、最快。想要文筆更好試 Kimi K2.6；Kimi K3 很貴，偶爾用。九個模型的比較在起點包 <code>OpenRouter模型怎麼選.md</code>。</div>
+  <div class="warn">這幾個模型是中國大陸的，<b>預設會寫簡體字和大陸用語</b>。第 3 節加的「台灣繁體中文」規則就是在擋這個。還是看到簡體字 → 品牌規格最上面再寫一次，範例貼文也要是繁體。</div>
+
+  <h3>3. 測試：故意弄壞三次</h3>
+  <ol>
+    <li><b>Gemini 自己通嗎？</b>「先用哪一組」選「只用 Gemini」→ 按 ✨。下面寫「這次用 Gemini」嗎？測完<b>改回「先用 OpenRouter」</b>。</li>
+    <li><b>備胎會自動上場嗎？</b>第一組金鑰最後一個字刪掉 → 儲存 → 按 ✨。看到「⚠️ OpenRouter：金鑰不對。這次改用 Gemini。」了嗎？<b>改回來。</b></li>
+    <li><b>兩組都壞呢？</b>第一組的模型打 <code>abc</code>、Gemini 模型先不動，再把 Gemini 金鑰刪一個字 → 按 ✨。兩個原因都有列出來嗎？<b>全部改回來。</b></li>
+  </ol>
+
+  <h3>4. 錢：200 美金可以按幾次？</h3>
+  <p>正常按 ✨ 兩次（用 OpenRouter），看按鈕下面的數字。<b>token</b> 是 AI 算錢的單位，大概一個中文字 1～2 個 token。</p>
+
+  <div class="rec check">
+    <b>✏️ 第 4 節</b>
+    <label><input type="checkbox" data-k="d_1"> 按下去按鈕會變灰，不能連按</label>
+    <label><input type="checkbox" data-k="d_g"> 「只用 Gemini」按得出貼文</label>
+    <label><input type="checkbox" data-k="d_2"> 第一組金鑰錯 → 自動換 Gemini，而且有提醒</label>
+    <label><input type="checkbox" data-k="d_3"> 兩組都錯 → 兩個原因都看得到</label>
+    <label><input type="checkbox" data-k="d_4"> 測完，「先用哪一組」改回先用 OpenRouter</label>
+    <b>我的 Gemini 用哪個型號？為什麼？</b>
+    <input type="text" data-k="d_gm" placeholder="例：gemini-3.8-flash，寫得最像我的品牌">
+    <b>按一次大約幾個 tokens、幾塊錢？200 美金大約可以按幾次？</b>
+    <textarea data-k="d_cost" placeholder="例：一次 4000 tokens，$0.0004；200 ÷ 0.0004 ＝ 50 萬次"></textarea>
+    <b>我的 OpenRouter 用哪個模型？有沒有看到簡體字？</b>
+    <input type="text" data-k="d_or" placeholder="例：DeepSeek V4.1 Flash，沒有簡體字">
+  </div>
+</div>
+
+<!-- 第 5 節 -->
+<div class="card">
+  <h2>第 5 節｜💬 AI 小幫手：聊天改文</h2>
+  <div class="time">14:10–15:00</div>
+  <p>AI 寫好了，但你想「短一點」「換個開頭」。現在要開 Codex 嗎？不用。<b>工作台裡請一個小幫手。</b></p>
+  <table>
+    <tr><th>Codex</th><th>小幫手</th></tr>
+    <tr><td>蓋房子的工人：改<b>程式</b>（index.html）</td><td>住在房子裡的管家：改<b>貼文</b></td></tr>
+    <tr><td>你今天叫它加功能</td><td>老闆以後每天叫它改文</td></tr>
+  </table>
+  <p>管家要先知道四件事，才改得好：<b>品牌規格、素材卡、現在這篇、你的要求</b>。然後只回「改好的整篇」。</p>
+  <div class="tip">小幫手按得很兇？它用 Gemini 的時候，可以到 ⚙ 設定把 Gemini 模型換成 <code>gemini-3.5-flash-lite</code>：比較快，小改夠用。</div>
+
+  <div class="prompt">請加「💬 AI 小幫手」，放在貼文框下面：
+1. 四個快捷按鈕：「短一點」「換開頭」「少一點 emoji」「更像範例」；一個輸入框＋「送出」按鈕；上面有對話紀錄（我說的、它回的）。
+2. 送出時，用跟 ✨ 一樣的方式呼叫 AI，但 messages 這樣組：
+   - 第一則 role 是 "system"：「你是【品牌名稱】的小編助理。使用者會叫你修改一篇【目前平台】貼文。只改使用者要求的地方，其他保持原樣；不能加素材卡上沒有的事實；遵守品牌規格；一律用台灣的繁體中文和台灣用語。不要出現簡體字，也不要用大陸用語（例如：視頻→影片、質量→品質、優化→改善、信息→訊息、網絡→網路、用戶→客人或使用者）。只回覆改好以後的整篇貼文，不要解釋、不要加標題。」後面接品牌規格全文和素材卡全文。
+   - 中間：之前的對話（最多留 8 則）。
+   - 最後一則 role 是 "user"：「目前的【平台】貼文：（貼文全文）。請這樣改：（我打的那句）」。
+3. 回來的文字，直接換掉「目前這個平台」的貼文框，預覽跟著變。換掉之前先存「上一版」（見第 6 點）。
+4. 這個平台還沒有貼文就不要送，提醒「先讓 AI 寫一篇」。
+5. 對話紀錄跟著這一篇自動暫存。
+6. 貼文框下面加「↩ 復原上一版」：AI（✨ 和小幫手）每次要換掉貼文之前，先把三個平台現在的內容存成「上一版」；按了就換回去（再按一次換回來）。
+7. 小幫手一樣用第 4 節那個「問 AI」函式，OpenRouter 失敗會自動換 Gemini。
+其他地方不要動。<button class="light copy">複製</button></div>
+
+  <h3>試用：改五次</h3>
+  <ol>
+    <li>按「短一點」。看手機預覽。</li>
+    <li>按「換開頭」。</li>
+    <li>自己打一句：「把價格放到第一句」（或你品牌的某件事）。</li>
+    <li>再打：「再短一點」。它知道「再」是接著上一句嗎？（對話紀錄有用嗎？）</li>
+    <li>按 ↩ 復原上一版。回去了嗎？</li>
+  </ol>
+  <div class="warn">小幫手改完，<b>有沒有偷加素材卡上沒有的事？</b>（例如自己編一個價格、一個時間。）有的話，記下來，第 6 節檢查官要抓它。</div>
+
+  <div class="rec">
+    <b>✏️ 第 5 節</b>
+    <div class="check">
+      <label><input type="checkbox" data-k="e_1"> 快捷按鈕會改，而且只改目前這個平台</label>
+      <label><input type="checkbox" data-k="e_2"> 自己打的一句，它聽得懂</label>
+      <label><input type="checkbox" data-k="e_3"> 「再短一點」知道是接著上一句</label>
+      <label><input type="checkbox" data-k="e_4"> ↩ 復原回得去</label>
+    </div>
+    <b>小幫手改得最好的一句、最糟的一句</b>
+    <textarea data-k="e_best"></textarea>
+    <b>它有沒有偷加素材卡上沒有的事？加了什麼？</b>
+    <textarea data-k="e_fake"></textarea>
+  </div>
+</div>
+
+<!-- 第 6 節 -->
+<div class="card">
+  <h2>第 6 節｜🔍 檢查官：第二個 AI 專門挑毛病</h2>
+  <div class="time">15:10–16:00</div>
+  <p>為什麼不叫寫的那個 AI 自己檢查？<b>自己改自己的作業，都會給自己 100 分。</b>所以請第二個 AI，角色不同（審核官）、指令不同（只准挑毛病），拿著你的檢查清單一條一條對。</p>
+  <p>它回的格式要<b>固定</b>（每條一行：編號、✅❌⚠️、一句話），工作台才能把 ❌ 標紅、⚠️ 標黃。</p>
+
+  <div class="prompt">請加「🔍 檢查官」按鈕，放在貼文框下面：
+1. 按了以後，第二次呼叫 AI（跟寫貼文的不是同一次對話），messages 這樣組：
+   - system：「你是【品牌名稱】的審核官，專門挑毛病，不負責誇獎。把每一篇貼文照檢查清單一條一條對。✅ 符合；❌ 不符合（寫出哪一句有問題、該怎麼改）；⚠️ 要靠人判斷的，先給意見。回覆格式：【平台名稱】換行，然後每條一行「編號 符號 一句話」，最後【總結】列出要人工確認的事。不管清單有沒有寫，都另外檢查有沒有簡體字或大陸用語。報告也用台灣繁體中文寫。」
+   - user：品牌規格全文＋素材卡全文＋設定裡的檢查清單（沒填就用內建六條：日期價格對不對、有沒有多加的事、只能在某平台講的有沒有跑掉、先不要講的有沒有出現、有沒有不能用的字、有沒有簡體字或大陸用語）＋每個平台的貼文（用【FB】【IG】【LINE】分開）。
+2. 回來的報告跳出一個視窗顯示：有 ❌ 的那行紅底、有 ⚠️ 的那行黃底。
+3. 沒有任何貼文時不要送，提醒「還沒有貼文可以檢查」。
+其他地方不要動。<button class="light copy">複製</button></div>
+
+  <h3>測試：故意出錯，看它抓不抓得到</h3>
+  <ol>
+    <li>先按 ✨ 讓 AI 寫一篇正常的。按 🔍 檢查官，看報告。（應該大部分 ✅。）</li>
+    <li>把素材卡「只能在某個平台說的」那件事，<b>手動貼進 FB 的貼文</b>。按 🔍。抓到了嗎？</li>
+    <li>把 FB 貼文裡的日期<b>改錯一天</b>。按 🔍。抓到了嗎？</li>
+    <li>沒抓到的 → 回 ⚙ 設定，把檢查清單那一條寫得更具體。再按一次。（<b>改規則，不改貼文。</b>）</li>
+  </ol>
+
+  <h3>互換試用（15:35 開始，人換位子，不傳檔案）</h3>
+  <ol>
+    <li>到同學的電腦，用他的工作台：填素材卡 → ✨ → 小幫手改一句 → 🔍 檢查官。（10 分鐘）</li>
+    <li>不准問。卡住的寫下來。</li>
+    <li>回來，挑同學寫的一個問題，叫 Codex 修。</li>
+  </ol>
+
+  <div class="rec">
+    <div class="check">
+      <b>✏️ 第 6 節</b>
+      <label><input type="checkbox" data-k="f_1"> 正常的一篇，報告看得懂</label>
+      <label><input type="checkbox" data-k="f_2"> 「只能在某平台說的」跑到 FB，抓到了</label>
+      <label><input type="checkbox" data-k="f_3"> 日期改錯，抓到了</label>
+    </div>
+    <b>沒抓到的是哪一個？我把檢查清單改成什麼，才抓到？</b>
+    <textarea data-k="f_miss"></textarea>
+    <b>我用同學的工作台，卡在哪？</b>
+    <textarea data-k="f_stuck"></textarea>
+    <b>同學用我的，卡在哪？我修了什麼？</b>
+    <textarea data-k="f_fix" placeholder="問題 → 我怎麼跟 Codex 說 → 修好了沒"></textarea>
+  </div>
+</div>
+
+<!-- 第 7 節 -->
+<div class="card">
+  <h2>第 7 節｜再上傳＋互查金鑰＋秀一下</h2>
+  <div class="time">16:10–17:00</div>
+
+  <h3>1. 備份＋截圖（自己做）</h3>
+  <ol>
+    <li>整個 <code>my-studio</code> 複製一份，改名 <code>my-studio_Day7完成</code>。</li>
+    <li>截一張圖：手機框裡有貼文、小幫手有對話、檢查官報告打開著。<b>⚙ 設定視窗不要打開（金鑰會入鏡）。</b></li>
+  </ol>
+
+  <h3>2. 再上傳一次，手機上也能叫 AI</h3>
+  <ol>
+    <li>GitHub：Add file → Upload files → 拖新的 <code>index.html</code> → Commit。</li>
+    <li>打開你的網址 → ⚙ 設定 → 重貼品牌規格、檢查清單、<b>兩組金鑰</b> → 儲存。</li>
+    <li><b>用手機</b>打開網址，⚙ 設定也貼一次（手機是另一台裝置），填素材卡，按 ✨。手機上也會寫了。</li>
+  </ol>
+
+  <h3>3. 互查：金鑰有沒有外流？</h3>
+  <ol>
+    <li>打開<b>隔壁同學</b>的 GitHub 倉庫（網址 <code>github.com/他的帳號/my-studio</code>）→ 點 <code>index.html</code>。</li>
+    <li>按 <span class="kbd">Ctrl</span>＋<span class="kbd">F</span>，搜 <code>sk-or</code>。</li>
+    <li><b>0 個</b> → 過關，跟他說一聲。</li>
+    <li>搜到 → <b>馬上跟老師說</b>（老師會換一把新的），他要刪掉重傳。</li>
+    <li><b>自己的 Gemini 金鑰自己查：</b>打開自己的倉庫，用金鑰的前 6 個字搜，要是 0 個。搜到了 → 去 aistudio.google.com/apikey 刪掉、建新的，再把檔案刪掉重傳。</li>
+  </ol>
+
+  <h3>4. 看同學的</h3>
+  <p>3～4 位上台，每人 1 分半：手機打開自己的網址 → 小幫手改一句 → 檢查官。</p>
+
+  <h3>5. 交紀錄</h3>
+  <p>按最下面「複製全部紀錄」，貼到 <a href="https://docs.google.com/document/d/1Ajs3mhDsf6pzNdVC6uZQpZkRM95NxMOLEFWcjjHBvoE/edit" target="_blank">Day 7 作業繳交區</a> 你的格子，<b>再貼上你的網址和截圖</b>（截圖裡不要有金鑰）。</p>
+  <div class="rec">
+    <b>✏️ 第 7 節</b>
+    <div class="check">
+      <label><input type="checkbox" data-k="g_1"> 新版上傳了，網址上的工作台能叫 AI</label>
+      <label><input type="checkbox" data-k="g_2"> 手機上也能叫 AI</label>
+      <label><input type="checkbox" data-k="g_3"> 我查了同學的倉庫 sk-or 是 0 個，也查了自己的 Gemini 金鑰</label>
+      <label><input type="checkbox" data-k="g_4"> 我知道 OpenRouter 用光時，去哪裡拿金鑰、怎麼切成「只用 Gemini」</label>
+    </div>
+    <b>我查的是誰的？他查的我，過關了嗎？</b>
+    <input type="text" data-k="g_who">
+    <b>我想偷學的一個地方（誰的、哪裡）</b>
+    <textarea data-k="steal"></textarea>
+    <b>今天學到最有用的一招</b>
+    <textarea data-k="best"></textarea>
+  </div>
+
+  <div class="warn"><b>帶回家的一件事：OpenRouter 用光了怎麼辦？</b><br>
+  老師的 OpenRouter 是全班共用的，總有一天會用完，或課程結束後停掉。到時候：<br>
+  ① 打開 <b>aistudio.google.com/apikey</b> 拿自己的金鑰（今天已經拿過了，就直接用）<br>
+  ② 工作台 ⚙ 設定 → 第二組貼上<br>
+  ③「先用哪一組」改成「<b>只用 Gemini</b>」→ 儲存。工作台照常用。</div>
+
+  <h3>6. 回家作業（下次上課是 11/4，中間隔兩週）</h3>
+  <ol>
+    <li>用你的網址（不是電腦裡的檔案），<b>真的做 2 篇</b>你品牌這兩週會發的貼文，每篇走完：✨ → 小幫手改 → 檢查官 → 💾 存檔。</li>
+    <li>有真的發出去的，把發文連結或截圖留著，11/4 帶來。</li>
+    <li>網址填在繳交區你的格子裡。</li>
+  </ol>
+  <div class="tip">下次預告：先複習今天的，然後做「貼文日曆」——一眼看到這個月哪天要發什麼、哪篇還沒好。</div>
+</div>
+
+<!-- 延伸 -->
+<div class="card">
+  <h2>延伸挑戰（做完基本的人，選一個）</h2>
+  <div class="ext"><span class="star">⭐</span> <b>模型比一比</b>：同一張素材卡，第一組分別選 DeepSeek V4.1 Flash、Kimi K2.6、MiniMax M3 各按一次 ✨（看按鈕下面花了多少錢）。哪個最像你的品牌？哪個最便宜？有沒有冒出簡體字？哪個比較像你的品牌？哪個比較便宜？寫下來。</div>
+  <div class="ext"><span class="star">⭐⭐</span> <b>三篇一起改</b>：小幫手加一個「三個平台一起改」的勾選。勾了以後，一句話同時改三篇（回覆格式用【FB】【IG】【LINE】分開，跟 ✨ 一樣分回各分頁）。
+    <div class="prompt">請在 AI 小幫手加一個勾選框「三個平台一起改」。勾了以後，送給 AI 的內容改成三個平台的貼文全部附上，要求它用【FB】【IG】【LINE】的標題分開回覆改好的三篇，回來以後照標題分到各分頁（跟 ✨ 一樣的做法）。沒勾就維持只改目前平台。其他地方不要動。<button class="light copy">複製</button></div></div>
+  <div class="ext"><span class="star">⭐⭐</span> <b>檢查官幫你改</b>：報告下面加「照報告改好」按鈕：第三次呼叫 AI，把報告裡的 ❌ 都改掉，改好的放回貼文框（舊的留在上一版）。</div>
+  <div class="ext"><span class="star">⭐⭐⭐</span> <b>一次做一週</b>：素材卡可以排隊 4 張（例如用「＋ 再一張」），按一次「全部寫」，依序叫 AI 寫完、各自存進 📁 我的貼文，狀態標「待檢查」。做完這題，下次的「貼文日曆」你已經做一半了。</div>
+  <div class="ext"><b>自由延伸</b>（上次大家想偷學的）：多張圖輪播、深色模式開關、上傳圖片放進預覽。<b>今天的主線先做完</b>再做這些。</div>
+  <div class="rec">
+    <b>✏️ 我做了哪個延伸？結果如何？</b>
+    <textarea data-k="ext"></textarea>
+  </div>
+</div>
+
+</div>
+
+<div class="bar">
+  <button id="copyAll">複製全部紀錄</button>
+  <button class="light" onclick="print()">列印</button>
+  <span id="saved"></span>
+</div>
+
+<script>
+  const KEY = 'day7-studio-v1';
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); document.getElementById('saved').textContent = '已自動儲存'; } catch (e) {}
+  }
+
+  document.querySelectorAll('[data-k]').forEach(el => {
+    const k = el.dataset.k;
+    const isBox = el.type === 'checkbox';
+    if (data[k] !== undefined) { if (isBox) el.checked = data[k]; else el.value = data[k]; }
+    el.addEventListener(isBox ? 'change' : 'input', () => { data[k] = isBox ? el.checked : el.value; save(); });
+  });
+
+  function copy(text, done) {
+    const fallback = () => prompt('請手動複製：', text);
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+  }
+
+  document.querySelectorAll('.copy').forEach(b => {
+    b.onclick = () => {
+      const text = b.parentElement.childNodes[0].textContent.trim();
+      copy(text, () => { b.textContent = '已複製'; setTimeout(() => b.textContent = '複製', 2000); });
+    };
+  });
+
+  const v = k => (data[k] || '').toString().trim() || '（未填）';
+  const yes = k => data[k] ? '✅' : '☐';
+
+  document.getElementById('copyAll').onclick = () => {
+    const text =
+`【Day 7 讓按鈕自己去問 AI｜紀錄】
+
+■ 第 1 節｜放上網路
+${yes('a_1')}倉庫建好 ${yes('a_2')}上傳成功 ${yes('a_3')}電腦打得開 ${yes('a_4')}手機打得開
+我的網址：${v('a_url')}
+同學的跟我的差在哪：${v('a_peer')}
+
+■ 第 2 節｜回到上一版
+${yes('b_1')}第二版上傳 ${yes('b_2')}History兩筆 ${yes('b_3')}回到上一版再回來
+上傳到 GitHub 等於：${v('b_say')}
+
+■ 第 3 節｜金鑰＋讓 AI 寫
+${yes('c_1')}金鑰欄存得住 ${yes('c_2')}貼文回來了 ${yes('c_3')}三平台自動分好 ${yes('c_4')}原始碼搜不到sk-or
+跟 Day 6 比：${v('c_cmp')}
+
+■ 第 4 節｜可靠＋備胎
+${yes('d_1')}不能連按 ${yes('d_g')}Gemini單獨可用 ${yes('d_2')}自動換Gemini ${yes('d_3')}兩組錯都看得到 ${yes('d_4')}已改回先用OpenRouter
+Gemini 型號：${v('d_gm')}
+OpenRouter 模型、有沒有簡體字：${v('d_or')}
+一次多少錢、200 美金幾次：${v('d_cost')}
+
+■ 第 5 節｜AI 小幫手
+${yes('e_1')}只改目前平台 ${yes('e_2')}自己打的聽得懂 ${yes('e_3')}接得上上一句 ${yes('e_4')}復原回得去
+最好／最糟的一句：${v('e_best')}
+有沒有偷加事實：${v('e_fake')}
+
+■ 第 6 節｜檢查官＋互換
+${yes('f_1')}正常報告看得懂 ${yes('f_2')}抓到平台外流 ${yes('f_3')}抓到日期錯
+沒抓到的、清單怎麼改：${v('f_miss')}
+我用同學的卡在：${v('f_stuck')}
+同學用我的卡在、我修了：${v('f_fix')}
+
+■ 第 7 節
+${yes('g_1')}網址版能叫AI ${yes('g_2')}手機能叫AI ${yes('g_3')}互查sk-or＋自查Gemini金鑰 ${yes('g_4')}知道OpenRouter用光怎麼辦
+互查對象：${v('g_who')}
+想偷學的：${v('steal')}
+今天最有用的一招：${v('best')}
+
+■ 延伸
+${v('ext')}`;
+    copy(text, () => document.getElementById('saved').textContent = '已複製全部紀錄！記得再貼截圖（不要有金鑰）');
+  };
+</script>
+</body>
+</html>
