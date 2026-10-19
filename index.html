@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>社群工作台</title>
+  <style>
+    :root {
+      --品牌色: #fc6703;
+      --品牌深色: #a9460a;
+      --墨色: #202a24;
+      --次要文字: #6c776f;
+      --畫布色: #fff8ed;
+      --背景點色: rgba(252, 103, 3, .11);
+      --背景光色: #fffdf8;
+      --頂列底色: #e4ede3;
+      --頂列文字色: #36533d;
+      --頂列邊線色: #ccdccb;
+      --視窗遮罩色: rgba(32, 42, 36, .42);
+      --超限色: #c62828;
+      --卡片色: #ffffff;
+      --邊線色: #d9e1dc;
+      --邊線深色: #b9c8bd;
+      --葉色: #52755a;
+      --葉色淡底: #edf4ee;
+      --品牌淡底: #fff1e7;
+      --手機邊框色: #252b27;
+      --手機畫面色: #f7f9f7;
+      --聊天背景色: #e8f4fb;
+      --圖片區底色: #f1f2ef;
+      --焦點色: #743000;
+      --面板陰影: 0 18px 44px rgba(32, 42, 36, 0.08);
+      --浮起陰影: 0 10px 26px rgba(32, 42, 36, 0.07);
+      --標記光暈: 0 0 0 4px rgba(255, 255, 255, .22);
+      --插圖陰影: 0 9px 8px rgba(32, 42, 36, .12);
+      --字體內文: "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+      --字體標題: "Noto Serif TC", "PMingLiU", serif;
+      --字體標籤: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--墨色);
+      background-color: var(--畫布色);
+      background-image:
+        radial-gradient(circle, var(--背景點色) 2px, transparent 2.5px),
+        radial-gradient(ellipse at 12% 25%, var(--背景光色), transparent 48%),
+        radial-gradient(ellipse at 88% 75%, rgba(255, 225, 194, .42), transparent 42%);
+      background-size: 34px 34px, auto, auto;
+      font-family: var(--字體內文);
+      line-height: 1.55;
+    }
+
+    body::before {
+      content: "🍙";
+      position: fixed;
+      right: 2vw;
+      bottom: 3vh;
+      z-index: 0;
+      font-size: clamp(76px, 10vw, 140px);
+      opacity: .13;
+      transform: rotate(10deg);
+      pointer-events: none;
+    }
+
+    .topbar, main { position: relative; z-index: 1; }
+
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+
+    .topbar {
+      min-height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 15px clamp(20px, 4vw, 64px);
+      color: var(--頂列文字色);
+      background: var(--頂列底色);
+      border-bottom: 1px solid var(--頂列邊線色);
+    }
+    .topbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+    .brand-lockup { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .rice-mark {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      overflow: hidden;
+      border: 2px solid var(--卡片色);
+      border-radius: 15px 15px 18px 18px;
+      background: var(--品牌淡底);
+      transform: rotate(-5deg);
+    }
+    .rice-mark::before {
+      content: "";
+      position: absolute;
+      width: 21px;
+      height: 24px;
+      left: 9px;
+      top: 7px;
+      background: var(--品牌色);
+      clip-path: polygon(50% 0, 100% 82%, 91% 100%, 9% 100%, 0 82%);
+    }
+    .rice-mark::after {
+      content: "";
+      position: absolute;
+      width: 11px;
+      height: 8px;
+      left: 15px;
+      top: 23px;
+      border-radius: 2px 2px 5px 5px;
+      background: var(--墨色);
+    }
+    .brand-lockup h1 {
+      margin: 0;
+      overflow: hidden;
+      font-family: var(--字體標題);
+      font-size: clamp(20px, 2.1vw, 28px);
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .topbar-note {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: var(--字體標籤);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      white-space: nowrap;
+    }
+    .topbar-note::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--卡片色);
+      box-shadow: var(--標記光暈);
+    }
+    .topbar-setting {
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 1px solid var(--頂列邊線色);
+      border-radius: 10px;
+      color: var(--頂列文字色);
+      background: var(--背景光色);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .topbar-setting:hover { border-color: var(--葉色); }
+
+    main {
+      width: min(1680px, 100%);
+      margin: 0 auto;
+      padding: 30px clamp(16px, 3vw, 44px) 44px;
+    }
+
+    .intro {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin: 0 0 22px;
+    }
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--葉色);
+      font-family: var(--字體標籤);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .16em;
+    }
+    .intro h2 {
+      margin: 0;
+      font-family: var(--字體標題);
+      font-size: clamp(24px, 2.4vw, 34px);
+      line-height: 1.2;
+      letter-spacing: .02em;
+    }
+    .intro-copy {
+      max-width: 330px;
+      margin: 0;
+      color: var(--次要文字);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 3fr);
+      align-items: stretch;
+      gap: 18px;
+    }
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--邊線色);
+      border-radius: 18px;
+      background: var(--卡片色);
+      box-shadow: var(--面板陰影);
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 21px 17px;
+      border-bottom: 1px solid var(--邊線色);
+    }
+    .panel-title-wrap { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .panel-symbol {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
+      place-items: center;
+      border-radius: 11px;
+      color: var(--品牌深色);
+      background: var(--品牌淡底);
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .panel h3 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: .03em; }
+    .small-note { color: var(--次要文字); font-size: 11px; white-space: nowrap; }
+
+    .material-form { padding: 17px 20px 21px; }
+    .field-list { display: grid; gap: 16px; }
+    .field { display: grid; gap: 6px; }
+    .field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .field label { font-size: 13px; font-weight: 800; }
+    .field-tag {
+      color: var(--次要文字);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+    .field-tag.required { color: var(--品牌深色); }
+    .field input, .field textarea {
+      width: 100%;
+      border: 1px solid var(--邊線色);
+      border-radius: 10px;
+      outline: none;
+      padding: 10px 12px;
+      color: var(--墨色);
+      background: var(--卡片色);
+      font-size: 13px;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+    .field input { min-height: 43px; }
+    .field textarea { min-height: 72px; resize: vertical; }
+    .field textarea.tall { min-height: 92px; }
+    .field input::placeholder, .field textarea::placeholder { color: var(--次要文字); opacity: .78; }
+    .field input:focus, .field textarea:focus, .post-editor:focus-visible {
+      border-color: var(--品牌色);
+      box-shadow: 0 0 0 3px var(--品牌淡底);
+    }
+    .optional-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 2px 0 -2px;
+      color: var(--葉色);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .1em;
+    }
+    .optional-divider::after { content: ""; height: 1px; flex: 1; background: var(--邊線色); }
+
+    .material-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 0 20px 20px; }
+    .material-actions .action-button { flex: 1 1 110px; }
+    .material-actions #open-import, .save-status { flex-basis: 100%; }
+    .save-status { color: var(--葉色); font-size: 11px; text-align: right; white-space: nowrap; }
+    .action-button {
+      min-height: 42px;
+      padding: 9px 14px;
+      border: 1px solid var(--品牌色);
+      border-radius: 10px;
+      color: var(--卡片色);
+      background: var(--品牌色);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      transition: background .16s ease, transform .16s ease;
+    }
+    .action-button:hover { background: var(--品牌深色); transform: translateY(-1px); }
+
+    .app-dialog {
+      width: min(680px, calc(100% - 28px));
+      max-width: none;
+      max-height: min(88vh, 850px);
+      padding: 0;
+      overflow: auto;
+      border: 1px solid var(--邊線色);
+      border-radius: 18px;
+      color: var(--墨色);
+      background: var(--卡片色);
+      box-shadow: var(--面板陰影);
+    }
+    .app-dialog::backdrop { background: var(--視窗遮罩色); }
+    .dialog-card { padding: 23px; }
+    .dialog-title { margin: 0 0 5px; font-size: 20px; font-weight: 800; }
+    .dialog-description { margin: 0 0 18px; color: var(--次要文字); font-size: 12px; }
+    .dialog-field { display: grid; gap: 7px; margin: 0 0 16px; }
+    .dialog-field label { font-size: 13px; font-weight: 800; }
+    .dialog-field textarea, .prompt-output {
+      display: block;
+      width: 100%;
+      min-height: 180px;
+      padding: 12px;
+      resize: vertical;
+      border: 1px solid var(--邊線色);
+      border-radius: 10px;
+      outline: none;
+      color: var(--墨色);
+      background: var(--手機畫面色);
+      font: 13px/1.65 var(--字體內文);
+    }
+    .dialog-field textarea:focus, .prompt-output:focus-visible { border-color: var(--品牌色); box-shadow: 0 0 0 3px var(--品牌淡底); }
+    .prompt-output { min-height: min(52vh, 460px); white-space: pre-wrap; }
+    .dialog-actions { display: flex; justify-content: flex-end; align-items: center; gap: 9px; margin-top: 18px; }
+    .dialog-status { flex: 1; color: var(--葉色); font-size: 12px; }
+    .dialog-secondary {
+      min-height: 40px;
+      padding: 8px 13px;
+      border: 1px solid var(--邊線色);
+      border-radius: 10px;
+      color: var(--墨色);
+      background: var(--卡片色);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .dialog-secondary:hover { background: var(--葉色淡底); }
+    .saved-post-list { display: grid; gap: 10px; }
+    .saved-post-empty { padding: 22px 12px; color: var(--次要文字); text-align: center; }
+    .saved-post-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px; border: 1px solid var(--邊線色); border-radius: 12px; }
+    .saved-post-meta { display: grid; gap: 4px; min-width: 0; }
+    .saved-post-name { overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+    .saved-post-time { color: var(--次要文字); font-size: 11px; }
+    .saved-post-actions { display: flex; flex: 0 0 auto; gap: 7px; }
+    .saved-post-actions button { min-height: 35px; padding: 6px 10px; }
+    .import-questions { margin-top: 15px; padding: 13px; border: 1px solid var(--邊線色); border-radius: 11px; background: var(--葉色淡底); }
+    .import-questions[hidden] { display: none; }
+    .import-questions h3 { margin: 0 0 7px; color: var(--葉色); font-size: 13px; }
+    .import-questions-content { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+
+    .post-panel { overflow: hidden; }
+    .post-panel .panel-head { border-bottom: 0; padding-bottom: 13px; }
+    .platform-tabs {
+      display: flex;
+      gap: 7px;
+      padding: 0 20px 16px;
+      border-bottom: 1px solid var(--邊線色);
+    }
+    .platform-tab {
+      flex: 1;
+      min-height: 39px;
+      padding: 8px 13px;
+      border: 1px solid var(--邊線色);
+      border-radius: 9px;
+      color: var(--次要文字);
+      background: var(--卡片色);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 800;
+      transition: color .16s ease, border-color .16s ease, background .16s ease, transform .16s ease;
+    }
+    .platform-tab:hover { border-color: var(--品牌色); color: var(--品牌深色); transform: translateY(-1px); }
+    .platform-tab[aria-pressed="true"] {
+      border-color: var(--品牌色);
+      color: var(--卡片色);
+      background: var(--品牌色);
+      box-shadow: var(--浮起陰影);
+    }
+    .editor-wrap { padding: 17px 20px 20px; }
+    .editor-label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .editor-label { font-size: 13px; font-weight: 800; }
+    .editor-hint { color: var(--次要文字); font-size: 11px; }
+    .post-editor {
+      display: block;
+      width: 100%;
+      min-height: 500px;
+      padding: 18px;
+      resize: vertical;
+      border: 1px solid var(--邊線色);
+      border-radius: 12px;
+      outline: none;
+      color: var(--墨色);
+      background-color: var(--手機畫面色);
+      background-image: linear-gradient(to bottom, transparent 35px, var(--邊線色) 36px);
+      background-size: 100% 36px;
+      font-family: var(--字體內文);
+      font-size: 15px;
+      line-height: 36px;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+    .post-editor::placeholder { color: var(--次要文字); opacity: .78; }
+    .post-counter-row { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; margin-top: 7px; color: var(--次要文字); font-size: 11px; }
+    .post-counter-row.over-limit { color: var(--超限色); font-weight: 800; }
+
+    .preview-panel { padding-bottom: 19px; }
+    .preview-panel .panel-head { margin-bottom: 17px; }
+    .preview-state {
+      padding: 5px 9px;
+      border-radius: 999px;
+      color: var(--葉色);
+      background: var(--葉色淡底);
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .phone {
+      width: min(360px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 10px;
+      border: 3px solid var(--手機邊框色);
+      border-radius: 31px;
+      background: var(--手機邊框色);
+      box-shadow: var(--浮起陰影);
+    }
+    .phone-screen {
+      overflow: auto;
+      min-height: 485px;
+      max-height: 560px;
+      border-radius: 22px;
+      background: var(--卡片色);
+    }
+    .phone-status {
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      color: var(--墨色);
+      font-family: var(--字體標籤);
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .phone-notch { width: 48px; height: 5px; border-radius: 99px; background: var(--手機邊框色); }
+    .phone-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 12px;
+      border-top: 1px solid var(--邊線色);
+      border-bottom: 1px solid var(--邊線色);
+    }
+    .phone-avatar {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      border: 2px solid var(--品牌色);
+      border-radius: 50%;
+      color: var(--品牌深色);
+      background: var(--品牌淡底);
+      font-family: var(--字體標題);
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .phone-brand-name { display: grid; gap: 1px; min-width: 0; }
+    .phone-brand-name strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .phone-brand-name span { overflow: hidden; color: var(--次要文字); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .phone-visual {
+      position: relative;
+      display: grid;
+      min-height: 230px;
+      place-items: center;
+      overflow: hidden;
+      background: var(--品牌淡底);
+    }
+    .sun-disc {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      right: -26px;
+      top: -29px;
+      border-radius: 50%;
+      background: var(--品牌色);
+      opacity: .13;
+    }
+    .rice-ball-illustration {
+      position: relative;
+      width: 118px;
+      height: 112px;
+      clip-path: polygon(50% 2%, 96% 83%, 92% 94%, 80% 100%, 20% 100%, 8% 94%, 4% 83%);
+      background: var(--卡片色);
+      filter: drop-shadow(var(--插圖陰影));
+    }
+    .rice-ball-illustration::before {
+      content: "";
+      position: absolute;
+      width: 48px;
+      height: 31px;
+      left: 35px;
+      bottom: 0;
+      border-radius: 7px 7px 2px 2px;
+      background: var(--墨色);
+    }
+    .rice-grain {
+      position: absolute;
+      width: 6px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--品牌色);
+      transform: rotate(26deg);
+    }
+    .grain-one { left: 45px; top: 35px; }
+    .grain-two { left: 68px; top: 23px; transform: rotate(-22deg); }
+    .grain-three { left: 79px; top: 49px; transform: rotate(42deg); }
+    .grain-four { left: 34px; top: 57px; transform: rotate(-31deg); }
+    .visual-caption {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 11px;
+      color: var(--品牌深色);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-align: center;
+    }
+    .phone-actions { display: flex; align-items: center; gap: 12px; padding: 12px 13px 7px; color: var(--墨色); font-size: 17px; }
+    .phone-caption { min-height: 96px; padding: 1px 13px 13px; color: var(--次要文字); font-size: 10px; line-height: 1.6; }
+    .phone-caption strong { color: var(--墨色); }
+    .preview-footnote { margin: 13px 16px 0; color: var(--次要文字); font-size: 11px; text-align: center; }
+
+    .preview-platform { min-height: 455px; color: var(--墨色); }
+    .preview-empty { color: var(--次要文字); opacity: .82; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .preview-copy { white-space: pre-wrap; overflow-wrap: anywhere; }
+    .preview-profile { display: flex; align-items: center; gap: 9px; padding: 12px 13px; }
+    .preview-profile-meta { display: grid; gap: 1px; min-width: 0; }
+    .preview-profile-meta strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .preview-profile-meta span { color: var(--次要文字); font-size: 9px; }
+    .preview-avatar {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      place-items: center;
+      border: 2px solid var(--品牌色);
+      border-radius: 50%;
+      color: var(--品牌深色);
+      background: var(--品牌淡底);
+      font-family: var(--字體標題);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .fb-post-copy { padding: 0 13px 12px; font-size: 11px; line-height: 1.65; }
+    .fb-image-placeholder {
+      position: relative;
+      display: grid;
+      min-height: 154px;
+      margin: 0 10px;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 4px;
+      background: var(--圖片區底色);
+    }
+    .fb-image-placeholder .rice-ball-illustration { transform: scale(.64); }
+    .fb-image-label { position: absolute; bottom: 7px; color: var(--次要文字); font-size: 9px; }
+    .fb-actions { display: flex; justify-content: space-around; margin-top: 9px; padding: 10px 6px; border-top: 1px solid var(--邊線色); color: var(--次要文字); font-size: 10px; font-weight: 700; }
+
+    .ig-account { font-size: 11px; }
+    .ig-artwork {
+      display: grid;
+      aspect-ratio: 1 / 1;
+      padding: 22px;
+      place-items: center;
+      background: var(--品牌淡底);
+      text-align: center;
+    }
+    .ig-artwork-date { font-family: var(--字體標題); font-size: clamp(21px, 7vw, 30px); font-weight: 800; line-height: 1.28; overflow-wrap: anywhere; }
+    .ig-artwork-date.preview-empty { color: var(--次要文字); font-family: var(--字體內文); font-size: 13px; font-weight: 500; }
+    .ig-actions { display: flex; align-items: center; gap: 13px; padding: 10px 12px 4px; font-size: 18px; }
+    .ig-caption { padding: 3px 12px 15px; font-size: 10px; line-height: 1.6; }
+    .ig-caption strong { margin-right: 4px; }
+
+    .line-preview { min-height: 455px; padding: 18px 12px; background: var(--聊天背景色); }
+    .line-message { display: flex; align-items: flex-start; gap: 8px; }
+    .line-bubble-wrap { min-width: 0; max-width: 82%; }
+    .line-sender { margin: 1px 0 4px 3px; color: var(--次要文字); font-size: 9px; }
+    .line-bubble { padding: 11px 12px; border-radius: 4px 15px 15px 15px; background: var(--卡片色); font-size: 11px; line-height: 1.65; box-shadow: var(--浮起陰影); }
+
+    :focus-visible { outline: 3px solid var(--焦點色); outline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+    @media (max-width: 1210px) {
+      .workspace { grid-template-columns: minmax(280px, .9fr) minmax(390px, 1.2fr); }
+      .preview-panel { grid-column: 1 / -1; }
+      .preview-panel-inner { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr); align-items: center; gap: 18px; padding: 0 20px; }
+      .preview-panel .panel-head { margin-bottom: 16px; }
+      .preview-footnote { margin: 0; text-align: left; }
+    }
+    @media (max-width: 820px) {
+      .topbar { min-height: 68px; padding: 12px 18px; }
+      .topbar-note { font-size: 11px; }
+      main { padding-top: 23px; }
+      .intro { align-items: start; flex-direction: column; gap: 9px; }
+      .intro-copy { text-align: left; }
+      .workspace { grid-template-columns: minmax(0, 1fr); }
+      .preview-panel { grid-column: auto; }
+      .preview-panel-inner { grid-template-columns: 1fr; }
+      .preview-footnote { text-align: center; }
+      .post-editor { min-height: 360px; }
+    }
+    @media (max-width: 480px) {
+      .topbar-note { display: none; }
+      .topbar { align-items: flex-start; flex-direction: column; gap: 9px; }
+      .topbar-actions { width: 100%; justify-content: flex-start; }
+      main { padding-right: 12px; padding-left: 12px; }
+      .panel-head { padding-right: 16px; padding-left: 16px; }
+      .material-form, .editor-wrap { padding-right: 16px; padding-left: 16px; }
+      .platform-tabs { padding-right: 16px; padding-left: 16px; }
+      .platform-tab { flex: 1; padding-right: 6px; padding-left: 6px; }
+      .small-note { display: none; }
+      .material-actions { flex-wrap: wrap; }
+      .save-status { flex-basis: 100%; }
+      .saved-post-item { align-items: flex-start; flex-direction: column; }
+      .saved-post-actions { width: 100%; }
+      .saved-post-actions button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-lockup">
+      <h1 id="page-title">轉角飯糰</h1>
+    </div>
+    <div class="topbar-actions">
+      <button class="topbar-setting" id="new-post" type="button">＋ 新的一篇</button>
+      <button class="topbar-setting" id="open-saved-posts" type="button">📁 我的貼文</button>
+      <button class="topbar-setting" id="open-settings" type="button">⚙ 設定</button>
+    </div>
+  </header>
+
+  <main aria-labelledby="page-title">
+    <section class="intro" aria-label="工作台說明">
+      <div>
+        <p class="eyebrow">品牌名稱・晨間備料單</p>
+        <h2>把今天的早晨記下來。</h2>
+      </div>
+      <p class="intro-copy">先整理素材，再慢慢寫成一篇貼文。</p>
+    </section>
+
+    <div class="workspace">
+      <section class="panel" aria-labelledby="materials-title">
+        <div class="panel-head">
+          <div class="panel-title-wrap">
+            <span class="panel-symbol" aria-hidden="true">✳</span>
+            <h3 id="materials-title">素材卡</h3>
+          </div>
+          <span class="small-note">必填欄位有橘色標記</span>
+        </div>
+        <form class="material-form" id="material-form">
+          <div class="field-list" id="field-list"></div>
+        </form>
+        <div class="material-actions">
+          <button class="action-button" id="save-post" type="button">💾 存檔</button>
+          <button class="action-button" id="build-prompt" type="button">🧩 組好指令</button>
+          <button class="action-button" id="open-import" type="button">📥 貼回 AI 寫好的</button>
+          <span class="save-status" id="save-status" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <section class="panel post-panel" aria-labelledby="post-title">
+        <div class="panel-head">
+          <div class="panel-title-wrap">
+            <span class="panel-symbol" aria-hidden="true">✎</span>
+            <h3 id="post-title">貼文編輯區</h3>
+          </div>
+          <span class="small-note">先寫下想說的話</span>
+        </div>
+        <div class="platform-tabs" id="platform-tabs" role="group" aria-label="選擇社群平台"></div>
+        <div class="editor-wrap">
+          <div class="editor-label-row">
+            <label class="editor-label" for="post-content">貼文內容</label>
+            <span class="editor-hint">切換平台會保留各自的文字</span>
+          </div>
+          <textarea class="post-editor" id="post-content" placeholder="在這裡撰寫貼文內容……"></textarea>
+          <div class="post-counter-row" id="post-counter-row" aria-live="polite">
+            <span id="post-counter">0 / 220 字</span>
+            <span id="post-counter-status"></span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel preview-panel" aria-labelledby="preview-title">
+        <div class="panel-head">
+          <div class="panel-title-wrap">
+            <span class="panel-symbol" aria-hidden="true">▣</span>
+            <h3 id="preview-title">手機預覽</h3>
+          </div>
+          <span class="preview-state">版面示意</span>
+        </div>
+        <div class="preview-panel-inner">
+          <div class="phone" aria-label="手機貼文外觀示意">
+            <div class="phone-screen">
+              <div class="phone-status"><span>9:41</span><span class="phone-notch" aria-hidden="true"></span><span>● ● ▰</span></div>
+              <div id="phone-preview" aria-live="polite"></div>
+            </div>
+          </div>
+          <p class="preview-footnote">預覽會隨貼文內容更新；草稿只保留在此頁面期間。</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <dialog class="app-dialog" id="settings-dialog" aria-labelledby="settings-title">
+    <div class="dialog-card">
+      <h2 class="dialog-title" id="settings-title">設定</h2>
+      <p class="dialog-description">內容會儲存在這個瀏覽器中。</p>
+      <div class="dialog-field">
+        <label for="brand-guidelines">品牌規格</label>
+        <textarea id="brand-guidelines" placeholder="貼上品牌規格……"></textarea>
+      </div>
+      <div class="dialog-field">
+        <label for="review-checklist">檢查清單</label>
+        <textarea id="review-checklist" placeholder="貼上檢查清單……"></textarea>
+      </div>
+      <div class="dialog-actions">
+        <span class="dialog-status" id="settings-status" aria-live="polite"></span>
+        <button class="dialog-secondary" type="button" data-close-dialog="settings-dialog">取消</button>
+        <button class="action-button" id="save-settings" type="button">儲存</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="app-dialog" id="prompt-dialog" aria-labelledby="prompt-title">
+    <div class="dialog-card">
+      <h2 class="dialog-title" id="prompt-title">組好的指令</h2>
+      <p class="dialog-description">確認內容後，可以複製並貼到其他地方使用。</p>
+      <textarea class="prompt-output" id="prompt-output" aria-label="組好的指令" readonly></textarea>
+      <div class="dialog-actions">
+        <span class="dialog-status" id="copy-status" aria-live="polite"></span>
+        <button class="dialog-secondary" type="button" data-close-dialog="prompt-dialog">關閉</button>
+        <button class="action-button" id="copy-prompt" type="button">複製</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="app-dialog" id="saved-posts-dialog" aria-labelledby="saved-posts-title">
+    <div class="dialog-card">
+      <h2 class="dialog-title" id="saved-posts-title">我的貼文</h2>
+      <p class="dialog-description">已存檔的素材卡與各平台貼文。</p>
+      <div class="saved-post-list" id="saved-post-list"></div>
+      <div class="dialog-actions">
+        <span class="dialog-status" aria-hidden="true"></span>
+        <button class="dialog-secondary" type="button" data-close-dialog="saved-posts-dialog">關閉</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="app-dialog" id="import-dialog" aria-labelledby="import-title">
+    <div class="dialog-card">
+      <h2 class="dialog-title" id="import-title">貼回 AI 寫好的內容</h2>
+      <p class="dialog-description">貼上包含【FB】【IG】【LINE】標題的完整回覆，再分配到各平台。</p>
+      <div class="dialog-field">
+        <label for="import-input">AI 回覆</label>
+        <textarea id="import-input" placeholder="【FB】&#10;貼文內容……&#10;&#10;【IG】&#10;貼文內容……&#10;&#10;【LINE】&#10;貼文內容……&#10;&#10;【要問我的】&#10;需要你確認的事……"></textarea>
+      </div>
+      <div class="import-questions" id="import-questions" hidden>
+        <h3>【要問我的】</h3>
+        <p class="import-questions-content" id="import-questions-content"></p>
+      </div>
+      <div class="dialog-actions">
+        <span class="dialog-status" id="import-status" aria-live="polite"></span>
+        <button class="dialog-secondary" type="button" data-close-dialog="import-dialog">關閉</button>
+        <button class="action-button" id="distribute-import" type="button">分到各平台</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    // 品牌資料、平台與素材卡欄位集中於此，之後可直接修改。
+    const BRAND = {
+      name: "轉角飯糰",
+      accountName: "❓待補",
+    };
+
+    const PLATFORMS = [
+      { id: "facebook", label: "FB", promptLabel: "FB", maxCharacters: 220 },
+      { id: "instagram", label: "IG", promptLabel: "IG", maxCharacters: 176 },
+      { id: "line", label: "LINE", promptLabel: "LINE", maxCharacters: 176 }
+    ];
+
+    const MATERIAL_FIELDS = [
+      { id: "date", label: "日期", required: true, example: "例如：2026/10/16（五）", type: "text", tall: false },
+      { id: "meal", label: "今日餐點", required: true, example: "例如：滷蛋酸菜傳統飯糰＋微糖熱豆漿", type: "textarea", tall: false },
+      { id: "morning", label: "一個早晨畫面", required: true, example: "例如：早上六點半剛掀開木桶蓋，糯米蒸氣冒出來，老客人已經在騎樓等了", type: "textarea", tall: true },
+      { id: "auntie", label: "阿姨的一句話", required: true, example: "例如：天氣變涼了，出門記得加件外套，先吃飽再慢慢去搭車。", type: "textarea", tall: false },
+      { id: "story", label: "食材小故事／特色", required: false, example: "例如：酸菜是阿姨自己手炒的，微辣帶脆，不愛香菜的記得先說喔", type: "textarea", tall: false },
+      { id: "lineOnly", label: "只在 LINE 說的", required: false, example: "例如：早上 7:00 前用 LINE（@corner_rice）預訂，幫你留最後兩顆溏心滷蛋", type: "textarea", tall: false },
+      { id: "holdBack", label: "先不要講的", required: false, example: "例如：先不要提下週要推出新口味「辣味菜脯」，留到禮拜六收攤前再預告", type: "textarea", tall: false },
+      { id: "uncertain", label: "❓ 還不確定的", required: false, example: "例如：明天早上會不會下雨？如果下雨要提醒大家騎車慢一點、袋子幫大家套兩層", type: "textarea", tall: false }
+    ];
+
+    const fieldList = document.getElementById("field-list");
+    const tabs = document.getElementById("platform-tabs");
+    const postContent = document.getElementById("post-content");
+    const phonePreview = document.getElementById("phone-preview");
+    const settingsDialog = document.getElementById("settings-dialog");
+    const promptDialog = document.getElementById("prompt-dialog");
+    const savedPostsDialog = document.getElementById("saved-posts-dialog");
+    const importDialog = document.getElementById("import-dialog");
+    const brandGuidelinesInput = document.getElementById("brand-guidelines");
+    const checklistInput = document.getElementById("review-checklist");
+    const promptOutput = document.getElementById("prompt-output");
+    const SETTINGS_STORAGE_KEY = "corner-rice-social-workbench-settings";
+    const SAVED_POSTS_STORAGE_KEY = "corner-rice-social-workbench-posts";
+    const AUTODRAFT_STORAGE_KEY = "corner-rice-social-workbench-autodraft";
+    const drafts = Object.fromEntries(PLATFORMS.map((platform) => [platform.id, ""]));
+    let activePlatformId = PLATFORMS[0].id;
+    let editingPostId = null;
+
+    function countPostCharacters(value) {
+      if (typeof Intl.Segmenter === "function") {
+        return Array.from(new Intl.Segmenter("zh-Hant", { granularity: "grapheme" }).segment(value)).length;
+      }
+      return Array.from(value).length;
+    }
+
+    function updatePostCounter() {
+      const platform = PLATFORMS.find((item) => item.id === activePlatformId) || PLATFORMS[0];
+      const characterCount = countPostCharacters(postContent.value);
+      const overLimit = characterCount > platform.maxCharacters;
+      document.getElementById("post-counter").textContent = `${characterCount} / ${platform.maxCharacters} 字`;
+      document.getElementById("post-counter-status").textContent = overLimit ? "超過了" : "";
+      document.getElementById("post-counter-row").classList.toggle("over-limit", overLimit);
+    }
+
+    document.title = `${BRAND.name}｜社群工作台`;
+    document.getElementById("page-title").textContent = BRAND.name;
+    document.querySelector(".eyebrow").textContent = `${BRAND.name}・晨間備料單`;
+
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || "{}");
+      brandGuidelinesInput.value = typeof savedSettings.brandGuidelines === "string" ? savedSettings.brandGuidelines : "";
+      checklistInput.value = typeof savedSettings.checklist === "string" ? savedSettings.checklist : "";
+    } catch {
+      brandGuidelinesInput.value = "";
+      checklistInput.value = "";
+    }
+
+    let optionalDividerAdded = false;
+    MATERIAL_FIELDS.forEach((field) => {
+      if (!field.required && !optionalDividerAdded) {
+        const divider = document.createElement("div");
+        divider.className = "optional-divider";
+        divider.textContent = "其他素材・選填";
+        fieldList.appendChild(divider);
+        optionalDividerAdded = true;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "field";
+
+      const labelRow = document.createElement("div");
+      labelRow.className = "field-label-row";
+
+      const label = document.createElement("label");
+      label.htmlFor = `field-${field.id}`;
+      label.textContent = field.label;
+
+      const tag = document.createElement("span");
+      tag.className = `field-tag${field.required ? " required" : ""}`;
+      tag.textContent = field.required ? "必填" : "選填";
+      labelRow.append(label, tag);
+
+      const control = document.createElement(field.type === "textarea" ? "textarea" : "input");
+      control.id = `field-${field.id}`;
+      control.name = field.id;
+      control.placeholder = field.example;
+      control.required = field.required;
+      control.setAttribute("aria-required", String(field.required));
+      if (field.type !== "textarea") control.type = field.type;
+      if (field.tall) control.classList.add("tall");
+
+      wrapper.append(labelRow, control);
+      fieldList.appendChild(wrapper);
+    });
+
+    function makeElement(tagName, className, text) {
+      const element = document.createElement(tagName);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    function makePreviewCopy(value, emptyHint, className) {
+      const copy = makeElement("div", className);
+      if (value.trim()) {
+        copy.textContent = value;
+      } else {
+        copy.classList.add("preview-empty");
+        copy.textContent = emptyHint;
+      }
+      return copy;
+    }
+
+    function makeAvatar() {
+      const avatar = makeElement("span", "preview-avatar", "飯");
+      avatar.setAttribute("aria-hidden", "true");
+      return avatar;
+    }
+
+    function makeRiceBallArt() {
+      const art = makeElement("div", "rice-ball-illustration");
+      art.setAttribute("aria-hidden", "true");
+      ["grain-one", "grain-two", "grain-three", "grain-four"].forEach((grainClass) => {
+        art.appendChild(makeElement("i", `rice-grain ${grainClass}`));
+      });
+      return art;
+    }
+
+    function makeProfile(name, note) {
+      const profile = makeElement("div", "preview-profile");
+      const meta = makeElement("div", "preview-profile-meta");
+      meta.append(makeElement("strong", "", name), makeElement("span", "", note));
+      profile.append(makeAvatar(), meta);
+      return profile;
+    }
+
+    function renderFacebookPreview() {
+      const article = makeElement("article", "preview-platform fb-preview");
+      article.append(makeProfile(BRAND.name, "剛剛"));
+      article.append(makePreviewCopy(drafts.facebook, "尚未輸入貼文內容", "fb-post-copy preview-copy"));
+
+      const image = makeElement("div", "fb-image-placeholder");
+      image.setAttribute("aria-label", "長方形圖片素材區");
+      image.append(makeRiceBallArt(), makeElement("span", "fb-image-label", "圖片素材區"));
+      article.append(image);
+
+      const actions = makeElement("div", "fb-actions");
+      ["讚", "留言", "分享"].forEach((label) => actions.appendChild(makeElement("span", "", label)));
+      article.append(actions);
+      return article;
+    }
+
+    function renderInstagramPreview() {
+      const article = makeElement("article", "preview-platform ig-preview");
+      const profile = makeElement("div", "preview-profile");
+      const handle = BRAND.accountName || "❓待補";
+      const profileHandle = makeElement("strong", "preview-profile-meta ig-account", handle === "❓待補" ? "帳號名稱待補" : handle);
+      if (handle === "❓待補") profileHandle.classList.add("preview-empty");
+      profile.append(makeAvatar(), profileHandle);
+      article.append(profile);
+
+      const artwork = makeElement("div", "ig-artwork");
+      const date = document.getElementById("field-date").value.trim();
+      const artworkDate = makeElement("div", "ig-artwork-date", date || "素材卡日期會顯示在這裡");
+      if (!date) artworkDate.classList.add("preview-empty");
+      artwork.appendChild(artworkDate);
+      article.append(artwork, makeElement("div", "ig-actions", "♡  💬  ➤"));
+
+      const caption = makeElement("div", "ig-caption");
+      const captionHandle = makeElement("strong", "", handle === "❓待補" ? "帳號名稱待補" : handle);
+      if (handle === "❓待補") captionHandle.classList.add("preview-empty");
+      const captionCopy = makeElement("span", "preview-copy");
+      if (drafts.instagram.trim()) {
+        captionCopy.textContent = drafts.instagram;
+      } else {
+        captionCopy.classList.add("preview-empty");
+        captionCopy.textContent = "尚未輸入貼文內容";
+      }
+      caption.append(captionHandle, document.createElement("br"), captionCopy);
+      article.append(caption);
+      return article;
+    }
+
+    function renderLinePreview() {
+      const chat = makeElement("div", "preview-platform line-preview");
+      const message = makeElement("div", "line-message");
+      const bubbleWrap = makeElement("div", "line-bubble-wrap");
+      const bubble = makePreviewCopy(drafts.line, "貼文內容會顯示在這裡", "line-bubble preview-copy");
+      bubbleWrap.append(makeElement("div", "line-sender", BRAND.name), bubble);
+      message.append(makeAvatar(), bubbleWrap);
+      chat.append(message);
+      return chat;
+    }
+
+    function renderPreview() {
+      const renderers = {
+        facebook: renderFacebookPreview,
+        instagram: renderInstagramPreview,
+        line: renderLinePreview
+      };
+      phonePreview.replaceChildren(renderers[activePlatformId]());
+      phonePreview.dataset.platform = activePlatformId;
+    }
+
+    postContent.addEventListener("input", () => {
+      drafts[activePlatformId] = postContent.value;
+      renderPreview();
+      updatePostCounter();
+      saveAutoDraft();
+    });
+
+    document.getElementById("field-date").addEventListener("input", renderPreview);
+    fieldList.addEventListener("input", saveAutoDraft);
+
+    PLATFORMS.forEach((platform, index) => {
+      const button = document.createElement("button");
+      button.className = "platform-tab";
+      button.type = "button";
+      button.textContent = platform.label;
+      button.dataset.platform = platform.id;
+      button.setAttribute("aria-pressed", String(index === 0));
+      button.addEventListener("click", () => {
+        if (activePlatformId === platform.id) return;
+        drafts[activePlatformId] = postContent.value;
+        activePlatformId = platform.id;
+        postContent.value = drafts[activePlatformId];
+        tabs.querySelectorAll(".platform-tab").forEach((tab) => {
+          const selected = tab === button;
+          tab.setAttribute("aria-pressed", String(selected));
+        });
+        renderPreview();
+        updatePostCounter();
+        saveAutoDraft();
+      });
+      tabs.appendChild(button);
+    });
+
+    function readSavedPosts() {
+      try {
+        const posts = JSON.parse(localStorage.getItem(SAVED_POSTS_STORAGE_KEY) || "[]");
+        return Array.isArray(posts) ? posts.filter((post) => post && typeof post.id === "string") : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function writeSavedPosts(posts) {
+      try {
+        localStorage.setItem(SAVED_POSTS_STORAGE_KEY, JSON.stringify(posts));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function collectMaterials() {
+      return Object.fromEntries(MATERIAL_FIELDS.map((field) => [field.id, document.getElementById(`field-${field.id}`).value]));
+    }
+
+    function createPostId() {
+      return window.crypto?.randomUUID ? window.crypto.randomUUID() : `post-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    function saveAutoDraft() {
+      try {
+        drafts[activePlatformId] = postContent.value;
+        localStorage.setItem(AUTODRAFT_STORAGE_KEY, JSON.stringify({
+          editingPostId,
+          materials: collectMaterials(),
+          drafts: { ...drafts },
+          activePlatformId,
+          updatedAt: new Date().toISOString()
+        }));
+      } catch {
+        document.getElementById("save-status").textContent = "自動暫存失敗";
+      }
+    }
+
+    function applyPostState(post) {
+      const materials = post.materials && typeof post.materials === "object" ? post.materials : {};
+      MATERIAL_FIELDS.forEach((field) => {
+        const input = document.getElementById(`field-${field.id}`);
+        input.value = typeof materials[field.id] === "string" ? materials[field.id] : "";
+      });
+      PLATFORMS.forEach((platform) => {
+        drafts[platform.id] = typeof post.drafts?.[platform.id] === "string" ? post.drafts[platform.id] : "";
+      });
+      activePlatformId = PLATFORMS.some((platform) => platform.id === post.activePlatformId) ? post.activePlatformId : PLATFORMS[0].id;
+      editingPostId = typeof post.editingPostId === "string" ? post.editingPostId : (typeof post.id === "string" ? post.id : null);
+      postContent.value = drafts[activePlatformId];
+      tabs.querySelectorAll(".platform-tab").forEach((tab) => {
+        tab.setAttribute("aria-pressed", String(tab.dataset.platform === activePlatformId));
+      });
+      renderPreview();
+      updatePostCounter();
+      saveAutoDraft();
+    }
+
+    function formatSavedAt(timestamp) {
+      const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) return "存檔時間不明";
+      return new Intl.DateTimeFormat("zh-TW", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "Asia/Taipei"
+      }).format(date);
+    }
+
+    function renderSavedPosts() {
+      const list = document.getElementById("saved-post-list");
+      list.replaceChildren();
+      const posts = readSavedPosts().sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
+      if (!posts.length) {
+        list.appendChild(makeElement("div", "saved-post-empty", "還沒有存檔的貼文。"));
+        return;
+      }
+      posts.forEach((post) => {
+        const item = makeElement("article", "saved-post-item");
+        const meta = makeElement("div", "saved-post-meta");
+        meta.append(
+          makeElement("div", "saved-post-name", post.title || "未命名貼文"),
+          makeElement("div", "saved-post-time", formatSavedAt(post.savedAt))
+        );
+        const actions = makeElement("div", "saved-post-actions");
+        const openButton = makeElement("button", "dialog-secondary", "打開");
+        openButton.type = "button";
+        openButton.dataset.action = "open";
+        openButton.dataset.postId = post.id;
+        const deleteButton = makeElement("button", "dialog-secondary", "刪除");
+        deleteButton.type = "button";
+        deleteButton.dataset.action = "delete";
+        deleteButton.dataset.postId = post.id;
+        actions.append(openButton, deleteButton);
+        item.append(meta, actions);
+        list.appendChild(item);
+      });
+    }
+
+    document.getElementById("save-post").addEventListener("click", () => {
+      drafts[activePlatformId] = postContent.value;
+      const posts = readSavedPosts();
+      let postId = editingPostId && posts.some((post) => post.id === editingPostId) ? editingPostId : null;
+      if (!postId) postId = createPostId();
+      const dateValue = document.getElementById("field-date").value.trim();
+      const firstContent = document.getElementById("field-meal").value.trim();
+      const now = new Date().toISOString();
+      const post = {
+        id: postId,
+        title: `${dateValue || "未填日期"}｜${firstContent || "未填餐點"}`,
+        savedAt: now,
+        materials: collectMaterials(),
+        drafts: { ...drafts },
+        activePlatformId
+      };
+      const existingIndex = posts.findIndex((savedPost) => savedPost.id === postId);
+      if (existingIndex >= 0) posts[existingIndex] = post;
+      else posts.unshift(post);
+      if (!writeSavedPosts(posts)) {
+        document.getElementById("save-status").textContent = "存檔失敗，請確認瀏覽器儲存空間。";
+        return;
+      }
+      editingPostId = postId;
+      saveAutoDraft();
+      document.getElementById("save-status").textContent = `已存檔：${formatSavedAt(now)}`;
+      renderSavedPosts();
+    });
+
+    document.getElementById("open-saved-posts").addEventListener("click", () => {
+      renderSavedPosts();
+      savedPostsDialog.showModal();
+    });
+
+    document.getElementById("saved-post-list").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const post = readSavedPosts().find((savedPost) => savedPost.id === button.dataset.postId);
+      if (!post) return;
+      if (button.dataset.action === "open") {
+        applyPostState(post);
+        document.getElementById("save-status").textContent = "";
+        savedPostsDialog.close();
+        return;
+      }
+      if (button.dataset.action === "delete" && window.confirm("確定嗎？")) {
+        const updatedPosts = readSavedPosts().filter((savedPost) => savedPost.id !== post.id);
+        if (!writeSavedPosts(updatedPosts)) return;
+        if (editingPostId === post.id) editingPostId = null;
+        saveAutoDraft();
+        renderSavedPosts();
+      }
+    });
+
+    const importInput = document.getElementById("import-input");
+    const importQuestions = document.getElementById("import-questions");
+    const importQuestionsContent = document.getElementById("import-questions-content");
+    const importStatus = document.getElementById("import-status");
+
+    document.getElementById("open-import").addEventListener("click", () => {
+      importInput.value = "";
+      importQuestions.hidden = true;
+      importQuestionsContent.textContent = "";
+      importStatus.textContent = "";
+      importDialog.showModal();
+    });
+
+    importInput.addEventListener("input", () => {
+      importQuestions.hidden = true;
+      importQuestionsContent.textContent = "";
+      importStatus.textContent = "";
+    });
+
+    document.getElementById("distribute-import").addEventListener("click", () => {
+      const source = importInput.value;
+      const headingPattern = /^[ \t]*【[ \t]*(FB|IG|LINE|要問我的)[ \t]*】[ \t]*/gim;
+      const headings = Array.from(source.matchAll(headingPattern));
+      const sections = {};
+      headings.forEach((heading, index) => {
+        const start = heading.index + heading[0].length;
+        const end = index + 1 < headings.length ? headings[index + 1].index : source.length;
+        const key = heading[1].toUpperCase();
+        const content = source.slice(start, end).trim();
+        sections[key] = sections[key] ? `${sections[key]}\n\n${content}` : content;
+      });
+
+      const importedPlatforms = [];
+      PLATFORMS.forEach((platform) => {
+        const heading = platform.promptLabel;
+        if (!Object.prototype.hasOwnProperty.call(sections, heading)) return;
+        drafts[platform.id] = sections[heading];
+        importedPlatforms.push(heading);
+      });
+
+      const questions = sections["要問我的"] || "";
+      importQuestionsContent.textContent = questions;
+      importQuestions.hidden = !questions;
+
+      if (!importedPlatforms.length) {
+        importStatus.textContent = questions ? "沒有平台段落；已顯示要確認的問題。" : "找不到【FB】【IG】【LINE】標題，請確認貼上的格式。";
+        return;
+      }
+
+      if (Object.prototype.hasOwnProperty.call(drafts, activePlatformId)) {
+        postContent.value = drafts[activePlatformId];
+      }
+      renderPreview();
+      updatePostCounter();
+      saveAutoDraft();
+      const missingPlatforms = PLATFORMS.map((platform) => platform.promptLabel).filter((label) => !importedPlatforms.includes(label));
+      importStatus.textContent = missingPlatforms.length
+        ? `已分到 ${importedPlatforms.join("、")}；未出現的 ${missingPlatforms.join("、")} 保留原內容。`
+        : `已分到 ${importedPlatforms.join("、")}。`;
+    });
+
+    document.getElementById("new-post").addEventListener("click", () => {
+      MATERIAL_FIELDS.forEach((field) => { document.getElementById(`field-${field.id}`).value = ""; });
+      PLATFORMS.forEach((platform) => { drafts[platform.id] = ""; });
+      activePlatformId = PLATFORMS[0].id;
+      editingPostId = null;
+      postContent.value = "";
+      tabs.querySelectorAll(".platform-tab").forEach((tab) => {
+        tab.setAttribute("aria-pressed", String(tab.dataset.platform === activePlatformId));
+      });
+      document.getElementById("save-status").textContent = "";
+      renderPreview();
+      updatePostCounter();
+      saveAutoDraft();
+    });
+
+    try {
+      const autoDraft = JSON.parse(localStorage.getItem(AUTODRAFT_STORAGE_KEY) || "null");
+      if (autoDraft && typeof autoDraft === "object") applyPostState(autoDraft);
+    } catch {
+      // 無法讀取暫存時保留空白工作台。
+    }
+
+    document.getElementById("open-settings").addEventListener("click", () => {
+      document.getElementById("settings-status").textContent = "";
+      settingsDialog.showModal();
+    });
+
+    document.getElementById("save-settings").addEventListener("click", () => {
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
+          brandGuidelines: brandGuidelinesInput.value,
+          checklist: checklistInput.value
+        }));
+        document.getElementById("settings-status").textContent = "已儲存設定。";
+      } catch {
+        document.getElementById("settings-status").textContent = "儲存失敗，請確認瀏覽器儲存空間。";
+      }
+    });
+
+    document.querySelectorAll("[data-close-dialog]").forEach((button) => {
+      button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close());
+    });
+
+    [settingsDialog, promptDialog, savedPostsDialog, importDialog].forEach((dialog) => {
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+    });
+
+    function getMaterialValue(field) {
+      const value = document.getElementById(`field-${field.id}`).value.trim();
+      if (!value) return "（未填）";
+      if (field.id !== "date" || /（[日一二三四五六]）$/.test(value)) return value;
+      const dateParts = value.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+      if (!dateParts) return value;
+      const [, yearText, monthText, dayText] = dateParts;
+      const date = new Date(Number(yearText), Number(monthText) - 1, Number(dayText));
+      if (date.getFullYear() !== Number(yearText) || date.getMonth() !== Number(monthText) - 1 || date.getDate() !== Number(dayText)) return value;
+      const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+      return `${yearText}/${monthText.padStart(2, "0")}/${dayText.padStart(2, "0")}（${weekdays[date.getDay()]}）`;
+    }
+
+    document.getElementById("build-prompt").addEventListener("click", () => {
+      const savedSettings = (() => {
+        try { return JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || "{}"); }
+        catch { return {}; }
+      })();
+      const brandGuidelines = typeof savedSettings.brandGuidelines === "string" ? savedSettings.brandGuidelines.trim() : "";
+      const checklist = typeof savedSettings.checklist === "string" ? savedSettings.checklist.trim() : "";
+      const platformNames = PLATFORMS.map((platform) => platform.promptLabel).join("、");
+      const promptLines = [
+        "（這段只要回覆文字，不要建立或修改任何檔案。）",
+        "",
+        `你是【${BRAND.name}】的小編。請照品牌規格，用素材卡的內容，寫【${platformNames}】的貼文，每個平台一篇。`,
+        "",
+        "規則：素材卡上沒有的事不要寫；只能在某個平台說的，只寫在那個平台；先不要講的，每一篇都不能寫；還不確定的不要寫，寫完列出來問我。",
+        "",
+        "回覆格式：每個平台用【FB】【IG】【LINE】這樣的標題分開。",
+        "",
+        "品牌規格：",
+        brandGuidelines || "（尚未填寫）",
+        "",
+        "素材卡：",
+        ...MATERIAL_FIELDS.map((field) => `${field.label}：${getMaterialValue(field)}`)
+      ];
+      if (checklist) promptLines.push("", "寫完照這張清單檢查，有 ❌ 先自己改好", checklist);
+      promptOutput.value = promptLines.join("\n");
+      document.getElementById("copy-status").textContent = "";
+      promptDialog.showModal();
+    });
+
+    document.getElementById("copy-prompt").addEventListener("click", async () => {
+      const copyStatus = document.getElementById("copy-status");
+      try {
+        if (!navigator.clipboard || !window.isSecureContext) throw new Error("Clipboard API unavailable");
+        await navigator.clipboard.writeText(promptOutput.value);
+      } catch {
+        promptOutput.focus();
+        promptOutput.select();
+        if (!document.execCommand("copy")) {
+          copyStatus.textContent = "複製失敗，請手動選取文字複製。";
+          return;
+        }
+      }
+      copyStatus.textContent = "已複製指令。";
+    });
+
+    renderPreview();
+    updatePostCounter();
+  </script>
+</body>
+</html>
