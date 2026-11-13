@@ -362,6 +362,9 @@
     .prompt-output { min-height: min(52vh, 460px); white-space: pre-wrap; }
     .dialog-actions { display: flex; justify-content: flex-end; align-items: center; gap: 9px; margin-top: 18px; }
     .dialog-status { flex: 1; color: var(--葉色); font-size: 12px; }
+    #open-auth { max-width: 100%; overflow-wrap: anywhere; }
+    #auth-dialog .dialog-actions { flex-wrap: wrap; }
+    #auth-status { margin: 10px 0 0; overflow-wrap: anywhere; }
     .dialog-secondary {
       min-height: 40px;
       padding: 8px 13px;
@@ -378,6 +381,11 @@
     .saved-post-empty { padding: 22px 12px; color: var(--次要文字); text-align: center; }
     .saved-post-item { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px; border: 1px solid var(--邊線色); border-radius: 12px; }
     .saved-post-meta { display: grid; gap: 4px; min-width: 0; }
+    .saved-post-heading { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; min-width: 0; }
+    .saved-post-badge { color: var(--葉色); font-size: 11px; white-space: nowrap; }
+    #saved-posts-dialog .dialog-actions { flex-wrap: wrap; }
+    #saved-posts-status { margin: 10px 0 0; }
+    #saved-posts-status.error { color: var(--超限色); }
     .saved-post-name { overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
     .saved-post-time { color: var(--次要文字); font-size: 11px; }
     .saved-post-actions { display: flex; flex: 0 0 auto; gap: 7px; }
@@ -720,6 +728,10 @@
     .material-actions #write-ai { order:2; }
     .material-actions #save-post { order:3; }
     .material-actions .ai-feedback, .material-actions .save-status { order:4; }
+    #field-publish-date { min-width: 0; }
+    #cloud-save-status { white-space: normal; overflow-wrap: anywhere; order: 5; }
+    #cloud-save-status:empty { display: none; }
+    #cloud-save-status.error { color: var(--超限色); }
 
     .action-button, .dialog-secondary, .topbar-setting, .platform-tab {
       --按鈕底: var(--按鈕白底);
@@ -806,6 +818,7 @@
       <button class="topbar-setting" id="new-post" type="button">＋ 新的一篇</button>
       <button class="topbar-setting" id="open-saved-posts" type="button">📁 我的貼文</button>
       <button class="topbar-setting" id="open-settings" type="button">⚙ 設定</button>
+      <button class="topbar-setting" id="open-auth" type="button">🔐 登入</button>
     </div>
   </header>
 
@@ -871,6 +884,7 @@
           <button class="action-button" id="write-ai" type="button">✨ 讓 AI 寫</button>
           <div class="ai-feedback" id="ai-feedback" aria-live="polite" hidden></div>
           <span class="save-status" id="save-status" aria-live="polite"></span>
+          <span class="save-status" id="cloud-save-status" role="status"></span>
         </div>
       </section>
 
@@ -1072,9 +1086,11 @@
       <p class="dialog-description">已存檔的素材卡與各平台貼文。</p>
       <div class="saved-post-list" id="saved-post-list"></div>
       <div class="dialog-actions">
-        <span class="dialog-status" aria-hidden="true"></span>
+        <button class="dialog-secondary" id="upload-saved-posts" type="button">⬆ 全部上傳到雲端</button>
+        <button class="dialog-secondary" id="download-saved-posts" type="button">⬇ 從雲端拿回來</button>
         <button class="dialog-secondary" type="button" data-close-dialog="saved-posts-dialog">關閉</button>
       </div>
+      <p class="dialog-status" id="saved-posts-status" role="status"></p>
     </div>
   </dialog>
 
@@ -1098,7 +1114,181 @@
     </div>
   </dialog>
 
+  <dialog class="app-dialog" id="auth-dialog" aria-labelledby="auth-title">
+    <form class="dialog-card" id="auth-form" novalidate>
+      <h2 class="dialog-title" id="auth-title">🔐 登入</h2>
+      <div class="dialog-field">
+        <label for="auth-email">Email</label>
+        <input id="auth-email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="dialog-field">
+        <label for="auth-password">密碼（至少 6 個字）</label>
+        <input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="6" required>
+      </div>
+      <div class="dialog-actions">
+        <button class="action-button" id="auth-sign-in" type="submit">登入</button>
+        <button class="dialog-secondary" id="auth-sign-up" type="button">第一次：註冊</button>
+        <button class="dialog-secondary" id="auth-sign-out" type="button">登出</button>
+        <button class="dialog-secondary" type="button" data-close-dialog="auth-dialog">關閉</button>
+      </div>
+      <p class="dialog-status" id="auth-status" role="status"></p>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // 這兩個可以公開，守門的是 Supabase 的 RLS；sb_secret_ 開頭的絕對不要貼
+    const SB_URL = 'https://mleixqvdkfwzjlsewnll.supabase.co';
+    const SB_KEY = 'sb_publishable_2Xt0Jdpqa9zlCXZf638PGA_nyQgh6rc';
+
+    let sb = null;
+    let me = null;
+    let authBusy = false;
+    let cloudUnavailableReason = "";
+    const authDialog = document.getElementById("auth-dialog");
+    const authButton = document.getElementById("open-auth");
+    const authEmail = document.getElementById("auth-email");
+    const authPassword = document.getElementById("auth-password");
+    const authSignIn = document.getElementById("auth-sign-in");
+    const authSignUp = document.getElementById("auth-sign-up");
+    const authSignOut = document.getElementById("auth-sign-out");
+    const authStatus = document.getElementById("auth-status");
+
+    function updateAuthControls() {
+      authButton.textContent = me?.email ? `☁ ${me.email}` : "🔐 登入";
+      const credentialsDisabled = !sb || authBusy || Boolean(me);
+      authEmail.disabled = credentialsDisabled;
+      authPassword.disabled = credentialsDisabled;
+      authSignIn.disabled = credentialsDisabled;
+      authSignUp.disabled = credentialsDisabled;
+      authSignOut.disabled = !sb || authBusy || !me;
+    }
+
+    function showAuthStatus() {
+      if (!sb) {
+        authStatus.textContent = `還沒接雲端：${cloudUnavailableReason}`;
+      } else {
+        authStatus.textContent = me ? `已登入：${me.email}` : "尚未登入";
+      }
+    }
+
+    if (!SB_URL.trim() || !SB_KEY.trim()) {
+      cloudUnavailableReason = "請先填寫 SB_URL 和 SB_KEY";
+    } else if (typeof window.supabase?.createClient !== "function") {
+      cloudUnavailableReason = "Supabase 程式庫載入失敗";
+    } else {
+      try {
+        sb = window.supabase.createClient(SB_URL, SB_KEY);
+        sb.auth.onAuthStateChange((event, session) => {
+          const previousUserId = me?.id;
+          me = session?.user ?? null;
+          if (previousUserId !== me?.id) setTimeout(refreshCloudPostSession, 0);
+          if (me?.email) authEmail.value = me.email;
+          updateAuthControls();
+          if (!authBusy && ["INITIAL_SESSION", "SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) {
+            showAuthStatus();
+          }
+        });
+      } catch {
+        sb = null;
+        cloudUnavailableReason = "Supabase 初始化失敗，請檢查 SB_URL 和 SB_KEY";
+      }
+    }
+    updateAuthControls();
+
+    function authErrorMessage(error) {
+      const code = error?.code || "";
+      const message = error?.message || "";
+      if (code === "invalid_credentials" || /invalid login credentials/i.test(message)) {
+        return "Email 或密碼不對";
+      }
+      if (["user_already_exists", "email_exists"].includes(code) || /user already registered/i.test(message)) {
+        return "這個 Email 註冊過了，直接按「登入」";
+      }
+      if (code === "email_not_confirmed" || /email not confirmed/i.test(message)) {
+        return "到 Supabase 把 Confirm email 關掉";
+      }
+      if (error?.reasons?.includes("length") || /password.*(?:at least|too short)/i.test(message)) {
+        return "至少 6 個字";
+      }
+      if (error?.status === 429 || code.endsWith("_rate_limit") || /rate limit|too many requests/i.test(message)) {
+        return "試太多次了，等 1 分鐘";
+      }
+      if (code === "weak_password") return "密碼不符合 Supabase 的強度要求";
+      return "操作失敗，請稍後再試";
+    }
+
+    async function runAuth(action) {
+      const signingOut = action === "signOut";
+      if (!sb || authBusy || (signingOut ? !me : me)) return;
+
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+      if (!signingOut) {
+        if (!authEmail.validity.valid) {
+          authStatus.textContent = "請輸入有效的 Email";
+          authEmail.focus();
+          return;
+        }
+        if (Array.from(password).length < 6) {
+          authStatus.textContent = "至少 6 個字";
+          authPassword.focus();
+          return;
+        }
+      }
+
+      authBusy = true;
+      updateAuthControls();
+      authStatus.textContent = "處理中…";
+      try {
+        if (signingOut) {
+          const clearLocal = window.confirm("要把這台電腦上的貼文也清掉嗎？借別人的電腦用，請按確定；自己的電腦按取消。");
+          const { error } = await sb.auth.signOut();
+          if (error) throw error;
+          refreshCloudPostSession();
+          authStatus.textContent = "已登出";
+          if (clearLocal) {
+            try {
+              await clearLocalPosts();
+              authStatus.textContent = "已登出，已清除這台電腦的貼文、草稿和圖片";
+            } catch {
+              authStatus.textContent = "已登出，本機資料未能完全清除，請再確認";
+            }
+          }
+          return;
+        }
+
+        const signingUp = action === "signUp";
+        const { data, error } = signingUp
+          ? await sb.auth.signUp({ email, password })
+          : await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        authPassword.value = "";
+        if (signingUp && !data.session) {
+          authStatus.textContent = "Supabase 的 Confirm email 還開著，關掉再按登入";
+        } else {
+          showAuthStatus();
+        }
+      } catch (error) {
+        authStatus.textContent = authErrorMessage(error);
+      } finally {
+        authBusy = false;
+        updateAuthControls();
+      }
+    }
+
+    authButton.addEventListener("click", () => {
+      if (!authBusy) showAuthStatus();
+      authDialog.showModal();
+    });
+    document.getElementById("auth-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      runAuth("signIn");
+    });
+    authSignUp.addEventListener("click", () => runAuth("signUp"));
+    authSignOut.addEventListener("click", () => runAuth("signOut"));
+    authDialog.addEventListener("close", () => { authPassword.value = ""; });
+
     const PIC_SIZE = { facebook: [1080,1080], instagram: [1080,1350], line: [1040,1040], threads: [1080,1350] };
     const SIZES = {
       platform: { label: "跟著平台", dimensions: null },
@@ -1155,6 +1345,14 @@
     ];
 
     const fieldList = document.getElementById("field-list");
+    const cloudSaveStatus = document.getElementById("cloud-save-status");
+    const cloudPostIds = new Set();
+    let cloudPostSession = { userId: null };
+    let cloudPostQueue = Promise.resolve();
+    let savedPostsBusy = false;
+    let clearingLocalPosts = false;
+    const cur = { publishDate: "" };
+    let cloudSaveVersion = 0;
     const tabs = document.getElementById("platform-tabs");
     const postContent = document.getElementById("post-content");
     const phonePreview = document.getElementById("phone-preview");
@@ -1162,6 +1360,9 @@
     const reviewDialog = document.getElementById("review-dialog");
     const promptDialog = document.getElementById("prompt-dialog");
     const savedPostsDialog = document.getElementById("saved-posts-dialog");
+    const savedPostsStatus = document.getElementById("saved-posts-status");
+    const uploadSavedPostsButton = document.getElementById("upload-saved-posts");
+    const downloadSavedPostsButton = document.getElementById("download-saved-posts");
     const importDialog = document.getElementById("import-dialog");
     const brandGuidelinesInput = document.getElementById("brand-guidelines");
     const aiApiKeyInput = document.getElementById("ai-api-key");
@@ -1254,6 +1455,16 @@
     });
 
     fieldList.appendChild(optionalDetails);
+    const publishDateField = makeElement("div", "field");
+    const publishDateLabel = makeElement("label", "", "📅 預計發佈日");
+    const publishDateInput = makeElement("input");
+    publishDateInput.id = "field-publish-date";
+    publishDateInput.name = "publishDate";
+    publishDateInput.type = "date";
+    publishDateLabel.htmlFor = publishDateInput.id;
+    publishDateField.append(publishDateLabel, publishDateInput);
+    fieldList.appendChild(publishDateField);
+
     function updateOptionalSummary() {
       const fields = MATERIAL_FIELDS.filter(field => !field.required);
       const filled = fields.filter(field => document.getElementById(`field-${field.id}`).value.trim()).length;
@@ -1396,6 +1607,7 @@
     });
 
     document.getElementById("field-date").addEventListener("input", renderPreview);
+    publishDateInput.addEventListener("input", () => { cur.publishDate = publishDateInput.value; });
     fieldList.addEventListener("input", saveAutoDraft);
 
     PLATFORMS.forEach((platform, index) => {
@@ -1452,11 +1664,12 @@
     }
 
     function saveAutoDraft() {
-      if (!imageStorageReady) return;
+      if (!imageStorageReady || clearingLocalPosts) return;
       try {
         drafts[activePlatformId] = postContent.value;
         localStorage.setItem(AUTODRAFT_STORAGE_KEY, JSON.stringify({
           editingPostId,
+          publishDate: cur.publishDate,
           materials: collectMaterials(),
           drafts: { ...drafts },
           pictures: pictures.map(picture => picture.id), mainPictureId, pictureText,
@@ -1473,6 +1686,8 @@
     }
 
     function applyLoadedPostState(post) {
+      publishDateInput.value = typeof post.publishDate === "string" ? post.publishDate : "";
+      cur.publishDate = publishDateInput.value;
       restorePictureText(post.pictureText);
       pictureGeneration++;
       pictures = Array.isArray(post.pictures) ? post.pictures.filter(p => p && typeof p.id === "string" && typeof p.url === "string" && p.url.startsWith("data:image/jpeg")) : [];
@@ -1516,10 +1731,25 @@
       }).format(date);
     }
 
+    function savedPostTime(post) {
+      if (post.savedAt != null && post.savedAt !== "") {
+        const time = new Date(post.savedAt).getTime();
+        if (Number.isFinite(time)) return time;
+      }
+      const id = String(post.id);
+      const timestamp = Number(id.match(/^post-(\d+)-/)?.[1] ?? (/^\d+$/.test(id) ? id : 0));
+      return Number.isFinite(new Date(timestamp).getTime()) ? timestamp : 0;
+    }
+
+    function sortSavedPosts(posts) {
+      return posts.sort((a, b) => savedPostTime(b) - savedPostTime(a) ||
+        String(b.id).localeCompare(String(a.id), undefined, { numeric: true }));
+    }
+
     function renderSavedPosts() {
       const list = document.getElementById("saved-post-list");
       list.replaceChildren();
-      const posts = readSavedPosts().sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
+      const posts = sortSavedPosts(readSavedPosts());
       if (!posts.length) {
         list.appendChild(makeElement("div", "saved-post-empty", "還沒有存檔的貼文。"));
         return;
@@ -1527,10 +1757,14 @@
       posts.forEach((post) => {
         const item = makeElement("article", "saved-post-item");
         const meta = makeElement("div", "saved-post-meta");
-        meta.append(
-          makeElement("div", "saved-post-name", post.title || "未命名貼文"),
-          makeElement("div", "saved-post-time", formatSavedAt(post.savedAt))
-        );
+        const publishDate = post.publishDate ? `｜📅 ${post.publishDate}` : "";
+        const heading = makeElement("div", "saved-post-heading");
+        heading.appendChild(makeElement("div", "saved-post-name", post.title || "未命名貼文"));
+        if (me) {
+          const exists = cloudPostSession.userId === me.id && cloudPostIds.has(post.id);
+          heading.appendChild(makeElement("span", "saved-post-badge", exists ? "☁ 雲端有" : "只在這台"));
+        }
+        meta.append(heading, makeElement("div", "saved-post-time", formatSavedAt(post.savedAt) + publishDate));
         const actions = makeElement("div", "saved-post-actions");
         const openButton = makeElement("button", "dialog-secondary", "打開");
         openButton.type = "button";
@@ -1538,6 +1772,7 @@
         openButton.dataset.postId = post.id;
         const deleteButton = makeElement("button", "dialog-secondary", "刪除");
         deleteButton.type = "button";
+        deleteButton.disabled = savedPostsBusy;
         deleteButton.dataset.action = "delete";
         deleteButton.dataset.postId = post.id;
         actions.append(openButton, deleteButton);
@@ -1546,7 +1781,197 @@
       });
     }
 
+    function clearCloudSaveStatus() {
+      cloudSaveVersion++;
+      cloudSaveStatus.textContent = "";
+      cloudSaveStatus.classList.remove("error");
+    }
+
+    function cloudPostErrorMessage(error, saving = false) {
+      if (error?.code === "42P01" || error?.code === "PGRST205") {
+        return "雲端還沒有 posts 表，到 SQL Editor 貼建表那段按 Run";
+      }
+      if (error?.code === "42501" || /row-level security/i.test(error?.message || "")) {
+        return saving ? "雲端不讓你存，SQL 的權限那段沒跑到" : "雲端不讓你執行這個操作，請檢查 SQL 的權限設定";
+      }
+      const reason = error?.message || "請稍後再試";
+      return saving ? `雲端存檔失敗：${reason}` : reason;
+    }
+
+    function currentCloudPostSession(session) {
+      return session === cloudPostSession && session.userId && session.userId === me?.id;
+    }
+
+    function checkCloudPostSession(session) {
+      if (!currentCloudPostSession(session)) throw new Error("登入帳號已變更，請再試一次");
+    }
+
+    function queueCloudPostOperation(operation) {
+      const pending = cloudPostQueue.then(operation);
+      cloudPostQueue = pending.catch(() => {});
+      return pending;
+    }
+
+    function refreshCloudPostSession() {
+      const userId = me?.id ?? null;
+      if (cloudPostSession.userId === userId) return;
+      cloudPostSession = { userId };
+      cloudPostIds.clear();
+      clearCloudSaveStatus();
+      showSavedPostsStatus("");
+      setSavedPostsBusy(false);
+      if (userId) syncSavedPosts("download", cloudPostSession);
+    }
+
+    async function upsertCloudPost(post, session) {
+      checkCloudPostSession(session);
+      const id = String(post.id);
+      const pictures = await Promise.all(imageIds(post).map(async (imageId) => {
+        const url = await imageStore("get", imageId);
+        if (typeof url !== "string") throw new Error("找不到這篇的圖片，請在原裝置重新上傳");
+        return { id: imageId, url };
+      }));
+      checkCloudPostSession(session);
+      const { error } = await sb.from("posts").upsert({
+        id,
+        user_id: session.userId,
+        data: { ...post, pictures },
+        publish_date: post.publishDate || null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "user_id,id" });
+      if (error) throw error;
+      checkCloudPostSession(session);
+      cloudPostIds.add(id);
+    }
+
+    async function saveCloudPost(post) {
+      if (!sb || !me) {
+        cloudSaveStatus.textContent = "只存在這台電腦。🔐 登入以後，會同時存到雲端";
+        return;
+      }
+
+      refreshCloudPostSession();
+      const session = cloudPostSession;
+      const version = cloudSaveVersion;
+      const data = JSON.parse(JSON.stringify(post));
+      cloudSaveStatus.textContent = "☁ 正在存到雲端…";
+
+      try {
+        await queueCloudPostOperation(() => upsertCloudPost(data, session));
+        if (version === cloudSaveVersion) cloudSaveStatus.textContent = `☁ 雲端也存了：${data.title}`;
+        renderSavedPosts();
+      } catch (error) {
+        if (version === cloudSaveVersion) {
+          cloudSaveStatus.classList.add("error");
+          cloudSaveStatus.textContent = `${cloudPostErrorMessage(error, true)}。這台電腦有存到，不會不見`;
+        }
+      }
+    }
+
+    function showSavedPostsStatus(message, failed = false) {
+      savedPostsStatus.textContent = message;
+      savedPostsStatus.classList.toggle("error", failed);
+    }
+
+    function setSavedPostsBusy(busy) {
+      savedPostsBusy = busy;
+      uploadSavedPostsButton.disabled = busy;
+      downloadSavedPostsButton.disabled = busy;
+      renderSavedPosts();
+    }
+
+    async function uploadSavedPosts(session) {
+      const posts = sortSavedPosts(readSavedPosts());
+      let uploaded = 0;
+      for (const post of posts) {
+        try {
+          await upsertCloudPost(post, session);
+          uploaded++;
+        } catch (error) {
+          throw new Error(`第 ${uploaded + 1} 篇上傳失敗：${cloudPostErrorMessage(error, true)}`);
+        }
+      }
+      return `上傳好了：${uploaded} 篇`;
+    }
+
+    async function downloadSavedPosts(session) {
+      const incoming = new Map();
+      const pageSize = 100;
+      let offset = 0;
+      while (true) {
+        checkCloudPostSession(session);
+        const { data, error } = await sb.from("posts").select("data, updated_at")
+          .eq("user_id", session.userId).order("id").range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        checkCloudPostSession(session);
+        if (!data.length) break;
+        for (const { data: post } of data) {
+          if ((typeof post?.id === "string" && post.id) || Number.isFinite(post?.id)) {
+            incoming.set(String(post.id), { ...post, id: String(post.id) });
+          }
+        }
+        offset += data.length;
+      }
+
+      // 先還原圖片。合併時重新讀本機，以保留取回期間存檔的內容。
+      for (const [id, post] of incoming) {
+        checkCloudPostSession(session);
+        incoming.set(id, await migrateImageRecord(post));
+      }
+      checkCloudPostSession(session);
+      const local = new Map(readSavedPosts().map(post => [post.id, post]));
+      let added = 0;
+      let updated = 0;
+      for (const [id, post] of incoming) {
+        const previous = local.get(id);
+        if (!previous) {
+          local.set(id, post);
+          added++;
+        } else if (savedPostTime(post) > savedPostTime(previous)) {
+          local.set(id, post);
+          updated++;
+        }
+      }
+      cloudPostIds.clear();
+      for (const id of incoming.keys()) cloudPostIds.add(id);
+      if (added + updated && !writeSavedPosts(sortSavedPosts([...local.values()]))) {
+        throw new Error("本機存檔失敗，請確認瀏覽器儲存空間");
+      }
+      updateWarehouseMeter();
+      return `拿回來了：新增 ${added} 篇、更新 ${updated} 篇`;
+    }
+
+    async function syncSavedPosts(action, session) {
+      if (!sb || !me) {
+        showSavedPostsStatus("先 🔐 登入");
+        return;
+      }
+      if (!session) {
+        refreshCloudPostSession();
+        session = cloudPostSession;
+      }
+      const uploading = action === "upload";
+      if (savedPostsBusy) return;
+      setSavedPostsBusy(true);
+      showSavedPostsStatus(uploading ? "正在上傳貼文…" : "正在從雲端拿回貼文…");
+      try {
+        const message = await queueCloudPostOperation(async () => {
+          await imageStorageInitialization;
+          checkCloudPostSession(session);
+          if (!imageStorageReady) throw new Error("圖片倉庫尚未就緒，請重新開啟頁面");
+          return uploading ? uploadSavedPosts(session) : downloadSavedPosts(session);
+        });
+        if (currentCloudPostSession(session)) showSavedPostsStatus(message);
+      } catch (error) {
+        if (currentCloudPostSession(session)) showSavedPostsStatus(cloudPostErrorMessage(error), true);
+      } finally {
+          if (cloudPostSession === session) setSavedPostsBusy(false);
+      }
+    }
+
     document.getElementById("save-post").addEventListener("click", () => {
+      clearCloudSaveStatus();
+      if (clearingLocalPosts) return;
       if (!imageStorageReady) { document.getElementById("save-status").textContent = "圖片倉庫尚未就緒，請重新開啟頁面。"; return; }
       drafts[activePlatformId] = postContent.value;
       const posts = readSavedPosts();
@@ -1554,14 +1979,15 @@
       if (!postId) postId = createPostId();
       const dateValue = document.getElementById("field-date").value.trim();
       const firstContent = document.getElementById("field-meal").value.trim();
-      const now = new Date().toISOString();
+      const now = Date.now();
       const post = {
         id: postId,
         title: `${dateValue || "未填日期"}｜${firstContent || "未填餐點"}`,
+        publishDate: cur.publishDate,
         savedAt: now,
         materials: collectMaterials(),
         drafts: { ...drafts },
-          pictures: pictures.map(picture => picture.id), mainPictureId, pictureText,
+        pictures: pictures.map(picture => picture.id), mainPictureId, pictureText,
         helperChats,
         previousDrafts,
         activePlatformId
@@ -1577,31 +2003,67 @@
       saveAutoDraft();
       document.getElementById("save-status").textContent = `已存檔：${formatSavedAt(now)}`;
       renderSavedPosts();
+      saveCloudPost(post);
     });
 
     document.getElementById("open-saved-posts").addEventListener("click", () => {
-      if (!imageStorageReady) return;
+      if (!imageStorageReady || clearingLocalPosts) return;
+      refreshCloudPostSession();
       renderSavedPosts();
       savedPostsDialog.showModal();
     });
 
-    document.getElementById("saved-post-list").addEventListener("click", (event) => {
+    uploadSavedPostsButton.addEventListener("click", () => syncSavedPosts("upload"));
+    downloadSavedPostsButton.addEventListener("click", () => syncSavedPosts("download"));
+
+    document.getElementById("saved-post-list").addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-action]");
       if (!button) return;
       const post = readSavedPosts().find((savedPost) => savedPost.id === button.dataset.postId);
       if (!post) return;
       if (button.dataset.action === "open") {
+        clearCloudSaveStatus();
         applyPostState(post);
         document.getElementById("save-status").textContent = "";
         savedPostsDialog.close();
         return;
       }
-      if (button.dataset.action === "delete" && window.confirm("確定嗎？")) {
-        const updatedPosts = readSavedPosts().filter((savedPost) => savedPost.id !== post.id);
-        if (!writeSavedPosts(updatedPosts)) return;
+      if (button.dataset.action !== "delete" || savedPostsBusy) return;
+      const signedIn = Boolean(sb && me);
+      if (!window.confirm(signedIn ? "確定要刪除這篇貼文？雲端的也會一起刪" : "確定嗎？")) return;
+      refreshCloudPostSession();
+      const session = cloudPostSession;
+      setSavedPostsBusy(true);
+      showSavedPostsStatus("");
+      try {
+        if (signedIn) {
+          await queueCloudPostOperation(async () => {
+            checkCloudPostSession(session);
+            const { data, error } = await sb.from("posts").delete()
+              .eq("id", post.id).eq("user_id", session.userId).select("id");
+            if (error) throw error;
+            checkCloudPostSession(session);
+            if (!data.length && cloudPostIds.has(post.id)) {
+              throw new Error("雲端貼文未能刪除，請取回雲端貼文後再試");
+            }
+            cloudPostIds.delete(post.id);
+          });
+          checkCloudPostSession(session);
+        }
+        const posts = readSavedPosts();
+        const current = posts.find(savedPost => savedPost.id === post.id);
+        if (current && JSON.stringify(current) !== JSON.stringify(post)) {
+          throw new Error("這台電腦上有較新的存檔，請重新確認後再刪除");
+        }
+        if (!writeSavedPosts(posts.filter(savedPost => savedPost.id !== post.id))) {
+          throw new Error("本機貼文未能刪除，請再試一次");
+        }
         if (editingPostId === post.id) editingPostId = null;
         saveAutoDraft();
-        renderSavedPosts();
+      } catch (error) {
+        if (cloudPostSession === session) showSavedPostsStatus(cloudPostErrorMessage(error), true);
+      } finally {
+        if (cloudPostSession === session) setSavedPostsBusy(false);
       }
     });
 
@@ -2045,8 +2507,7 @@
       button.addEventListener("click", () => sendHelper(button.textContent));
     });
 
-    document.getElementById("new-post").addEventListener("click", () => {
-      if (!imageStorageReady) return;
+    function resetCurrentPost() {
       postRevision += 1;
       helperChats = Object.fromEntries(PLATFORMS.map((platform) => [platform.id, []]));
       previousDrafts = null;
@@ -2054,6 +2515,9 @@
       updateUndoButton();
       document.getElementById("helper-status").textContent = "";
       MATERIAL_FIELDS.forEach((field) => { document.getElementById(`field-${field.id}`).value = ""; });
+      publishDateInput.value = "";
+      cur.publishDate = "";
+      clearCloudSaveStatus();
       PLATFORMS.forEach((platform) => { drafts[platform.id] = ""; });
       activePlatformId = PLATFORMS[0].id;
       editingPostId = null;
@@ -2065,8 +2529,35 @@
       document.getElementById("save-status").textContent = "";
       renderPreview();
       updatePostCounter();
+    }
+
+    document.getElementById("new-post").addEventListener("click", () => {
+      if (!imageStorageReady || clearingLocalPosts) return;
+      resetCurrentPost();
       saveAutoDraft();
     });
+
+    async function clearLocalPosts() {
+      clearingLocalPosts = true;
+      const main = document.querySelector("main");
+      try {
+        await imageStorageInitialization;
+        main.inert = true;
+        resetCurrentPost();
+        for (const id of ["helper-input", "image-prompt", "import-input", "prompt-output", "records-fallback"]) {
+          document.getElementById(id).value = "";
+        }
+        localStorage.removeItem(SAVED_POSTS_STORAGE_KEY);
+        localStorage.removeItem(AUTODRAFT_STORAGE_KEY);
+        renderSavedPosts();
+        updateStorageMeter();
+        await imageStore("clear");
+        updateWarehouseMeter();
+      } finally {
+        main.inert = false;
+        clearingLocalPosts = false;
+      }
+    }
 
     document.getElementById("open-settings").addEventListener("click", () => {
       document.getElementById("settings-status").textContent = "";
@@ -2091,7 +2582,7 @@
       button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close());
     });
 
-    [settingsDialog, promptDialog, savedPostsDialog, importDialog, reviewDialog].forEach((dialog) => {
+    [settingsDialog, promptDialog, savedPostsDialog, importDialog, reviewDialog, authDialog].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) dialog.close();
       });
@@ -2458,9 +2949,16 @@
       return new Promise((resolve, reject) => {
         const transaction = db.transaction("imgs", action === "get" || action === "count" ? "readonly" : "readwrite");
         const store = transaction.objectStore("imgs");
-        const request = action === "put" ? store.put(value, id) : action === "count" ? store.count() : store[action](id);
-        transaction.oncomplete = () => resolve(request.result);
-        transaction.onerror = () => reject(transaction.error || request.error);
+        let request;
+        if (action === "restore") {
+          for (const picture of value) store.put(picture.url, picture.id);
+        } else if (action === "count" || action === "clear") {
+          request = store[action]();
+        } else {
+          request = action === "put" ? store.put(value, id) : store[action](id);
+        }
+        transaction.oncomplete = () => resolve(request?.result);
+        transaction.onerror = () => reject(transaction.error || request?.error);
         transaction.onabort = () => reject(transaction.error || new Error("圖片倉庫操作未完成"));
       });
     }
@@ -2469,11 +2967,10 @@
     }
     async function migrateImageRecord(post) {
       if (!post || typeof post !== "object") return post;
-      for (const picture of Array.isArray(post.pictures) ? post.pictures : []) {
-        if (picture && typeof picture.id === "string" && typeof picture.url === "string" && picture.url.startsWith("data:image/")) {
-          await imageStore("put", picture.id, picture.url);
-        }
-      }
+      const embeddedPictures = (Array.isArray(post.pictures) ? post.pictures : []).filter(picture =>
+        typeof picture?.id === "string" && typeof picture.url === "string" && picture.url.startsWith("data:image/")
+      );
+      if (embeddedPictures.length) await imageStore("restore", null, embeddedPictures);
       return { ...post, pictures: imageIds(post) };
     }
     async function applyPostState(post) {
@@ -2483,11 +2980,14 @@
         const migrated = await migrateImageRecord(post);
         const loaded = await Promise.all(migrated.pictures.map(async id => {
           const url = await imageStore("get", id);
-          if (typeof url !== "string") throw new Error("圖片遺失");
-          return { id, url };
+          return typeof url === "string" ? { id, url } : null;
         }));
         if (generation !== pictureGeneration) return false;
-        applyLoadedPostState({ ...migrated, pictures: loaded });
+        const available = loaded.filter(Boolean);
+        applyLoadedPostState({ ...migrated, pictures: available });
+        document.getElementById("picture-message").textContent = available.length < loaded.length
+          ? "這篇貼文有圖片未能取回。請在原裝置重新上傳貼文。"
+          : "";
         return true;
       } catch {
         document.getElementById("picture-message").textContent = "圖片倉庫讀取失敗，這篇尚未打開。請重新開啟頁面再試。";
@@ -2530,7 +3030,7 @@
         document.getElementById("picture-message").textContent = "圖片搬移未完成，原始紀錄已保留。請重新開啟頁面再試。";
       } finally { main.inert = false; }
     }
-    initializeImageStorage();
+    const imageStorageInitialization = initializeImageStorage();
 
     // 所有輸出採欄位白名單，金鑰只在本機用於遮蔽比對。
     function safeOutputText(value) {
@@ -2545,8 +3045,13 @@
     }
     function safePostRecord(post) {
       const strings = (keys, source) => Object.fromEntries(keys.map(key => [key, safeOutputText(source?.[key])]));
+      const savedAt = typeof post.savedAt === "number" ? new Date(post.savedAt) : null;
       return {
-        id: safeOutputText(post.id), title: safeOutputText(post.title), savedAt: safeOutputText(post.savedAt),
+        id: safeOutputText(post.id), title: safeOutputText(post.title),
+        savedAt: savedAt && !Number.isNaN(savedAt.getTime())
+          ? savedAt.toISOString()
+          : safeOutputText(post.savedAt),
+        publishDate: safeOutputText(post.publishDate),
         materials: strings(MATERIAL_FIELDS.map(field => field.id), post.materials),
         drafts: strings(PLATFORMS.map(platform => platform.id), post.drafts),
         pictures: imageIds(post), mainPictureId: typeof post.mainPictureId === "string" ? post.mainPictureId : null,
@@ -2563,7 +3068,7 @@
       const posts = JSON.parse(localStorage.getItem(SAVED_POSTS_STORAGE_KEY) || "[]");
       if (!Array.isArray(posts)) throw new Error("貼文紀錄無法讀取。");
       const settings = readAiSettings();
-      const current = { materials:collectMaterials(), drafts:{...drafts, [activePlatformId]:postContent.value},
+      const current = { publishDate:cur.publishDate, materials:collectMaterials(), drafts:{...drafts, [activePlatformId]:postContent.value},
         pictures:pictures.map(p => p.id), mainPictureId, pictureText, activePlatformId, helperChats };
       return { format:"my-studio-backup", version:1, exportedAt:new Date().toISOString(), brand:safeOutputText(BRAND.name),
         specifications:Object.fromEntries(["brandGuidelines","imageGuidelines","checklist"].map(key => [key,safeOutputText(settings[key])])),
