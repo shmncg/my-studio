@@ -339,6 +339,59 @@
       box-shadow: var(--面板陰影);
     }
     .app-dialog::backdrop { background: var(--視窗遮罩色); }
+    #calendar-dialog { width: min(960px, calc(100% - 28px)); }
+    .calendar-navigation { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .calendar-month { margin: 0; text-align: center; font-size: 20px; font-weight: 800; }
+    .calendar-grid { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    .calendar-grid th { padding: 9px 0; color: var(--次要文字); font-size: 13px; }
+    .calendar-day { position: relative; height: 112px; padding: 6px; border: 1px solid var(--邊線色); vertical-align: top; }
+    .calendar-day.selected { box-shadow: inset 0 0 0 2px var(--品牌色); }
+    .calendar-select-day { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; }
+    .calendar-select-day:focus-visible { outline: 2px solid var(--品牌深色); outline-offset: -3px; }
+    .calendar-day.outside-month { background: #f3f4f6; color: #9ca3af; }
+    .calendar-day-number { display: inline-flex; align-items: center; justify-content: center; min-width: 27px; height: 27px; margin-bottom: 5px; border-radius: 8px; font-size: 12px; }
+    .calendar-day-number.today { background: var(--品牌色); color: #fff; }
+    .calendar-day.big-day { background: var(--品牌淡底); }
+    .calendar-day-heading { display: flex; align-items: baseline; gap: 3px; }
+    .calendar-big-day-name { min-width: 0; color: var(--品牌深色); font-size: 11px; font-weight: 700; overflow-wrap: anywhere; }
+    .calendar-line-setting { display: grid; width: 108px; gap: 3px; color: var(--次要文字); font-size: 12px; }
+    .calendar-line-setting[hidden] { display: none; }
+    .calendar-line-setting input { width: 100%; min-width: 0; padding: 5px 7px; border: 1px solid var(--邊線色); border-radius: 7px; color: var(--墨色); background: var(--卡片色); }
+    .calendar-post { display: block; overflow: hidden; margin-top: 4px; padding: 4px 5px; border-radius: 5px; background: var(--品牌淡底); color: var(--墨色); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .outside-month .calendar-post { color: #9ca3af; background: #e5e7eb; }
+    .calendar-post.incomplete { border-left: 3px solid var(--超限色); background: #fef2f2; color: var(--超限色); }
+    .calendar-section { margin-top: 18px; }
+    .calendar-section h3 { margin: 0 0 9px; font-size: 15px; }
+    .calendar-post-list { display: grid; gap: 8px; }
+    .calendar-post-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px; border: 1px solid var(--邊線色); border-radius: 10px; }
+    .calendar-post-details { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; }
+    .calendar-post-meta, .calendar-empty { margin: 4px 0 0; color: var(--次要文字); font-size: 12px; }
+    .calendar-missing { margin: 4px 0 0; color: var(--超限色); font-size: 12px; }
+    .calendar-post-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; }
+    .calendar-date-input { min-width: 0; max-width: 100%; min-height: 40px; padding: 6px; border: 1px solid var(--邊線色); border-radius: 8px; color: var(--墨色); background: var(--卡片色); font-size: 13px; }
+    .calendar-notice { position: sticky; bottom: 0; pointer-events: none; z-index: 1; width: fit-content; max-width: 100%; margin: 12px 0 0; padding: 7px 10px; border-radius: 8px; background: var(--品牌淡底); color: var(--墨色); font-size: 13px; overflow-wrap: anywhere; }
+    .calendar-notice:empty { display: none; }
+    .calendar-notice.error { background: #fef2f2; color: var(--超限色); }
+    .calendar-summary { margin: 14px 0 0; color: var(--次要文字); font-size: 12px; overflow-wrap: anywhere; }
+    .calendar-summary h3 { margin: 0 0 6px; color: var(--墨色); font-size: 15px; }
+    .calendar-summary p { margin: 4px 0 0; }
+    .calendar-summary .error { color: var(--超限色); }
+    @media (max-width: 640px) {
+      #calendar-dialog .dialog-card { padding: 12px; }
+      .calendar-navigation { grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px; }
+      .calendar-navigation .dialog-secondary { padding: 7px 8px; font-size: 11px; }
+      .calendar-month { font-size: 15px; }
+      #calendar-today { grid-column: 1; justify-self: start; }
+      .calendar-line-setting { grid-column: 2 / -1; justify-self: end; width: min(110px, 100%); font-size: 11px; }
+      .calendar-day-heading { flex-direction: column; gap: 0; }
+      .calendar-big-day-name { font-size: 9px; }
+      .calendar-day { height: 84px; padding: 3px; }
+      .calendar-day-number { min-width: 23px; height: 23px; font-size: 11px; }
+      .calendar-post { padding: 3px 2px; font-size: 10px; }
+      .calendar-summary { font-size: 11px; }
+      .calendar-post-actions { width: 100%; }
+      .calendar-post-actions .dialog-secondary { padding-inline: 9px; }
+    }
     .dialog-card { padding: 23px; }
     .dialog-title { margin: 0 0 5px; font-size: 20px; font-weight: 800; }
     .dialog-description { margin: 0 0 18px; color: var(--次要文字); font-size: 12px; }
@@ -817,6 +870,7 @@
     <div class="topbar-actions">
       <button class="topbar-setting" id="new-post" type="button">＋ 新的一篇</button>
       <button class="topbar-setting" id="open-saved-posts" type="button">📁 我的貼文</button>
+      <button class="topbar-setting" id="open-calendar" type="button">📅 日曆</button>
       <button class="topbar-setting" id="open-settings" type="button">⚙ 設定</button>
       <button class="topbar-setting" id="open-auth" type="button">🔐 登入</button>
     </div>
@@ -1094,6 +1148,41 @@
     </div>
   </dialog>
 
+  <dialog class="app-dialog" id="calendar-dialog" aria-labelledby="calendar-month">
+    <div class="dialog-card">
+      <div class="calendar-navigation">
+        <button class="dialog-secondary" id="calendar-previous" type="button">‹ 上個月</button>
+        <h2 class="calendar-month" id="calendar-month" aria-live="polite"></h2>
+        <button class="dialog-secondary" id="calendar-next" type="button">下個月 ›</button>
+        <button class="dialog-secondary" id="calendar-today" type="button">今天</button>
+        <label class="calendar-line-setting" id="calendar-line-setting" hidden>
+          LINE 好友人數
+          <input id="calendar-line-friends" type="number" min="0" step="1" inputmode="numeric">
+        </label>
+      </div>
+      <table class="calendar-grid" aria-labelledby="calendar-month">
+        <thead><tr><th scope="col">日</th><th scope="col">一</th><th scope="col">二</th><th scope="col">三</th><th scope="col">四</th><th scope="col">五</th><th scope="col">六</th></tr></thead>
+        <tbody id="calendar-days"></tbody>
+      </table>
+      <section class="calendar-summary" aria-labelledby="calendar-summary-title">
+        <h3 id="calendar-summary-title">這個月的總結</h3>
+        <div id="calendar-summary" aria-live="polite"></div>
+      </section>
+      <section class="calendar-section" id="calendar-selected-day" aria-labelledby="calendar-selected-title" hidden>
+        <h3 id="calendar-selected-title"></h3>
+        <div class="calendar-post-list" id="calendar-selected-posts"></div>
+      </section>
+      <section class="calendar-section" aria-labelledby="calendar-unscheduled-title">
+        <h3 id="calendar-unscheduled-title"></h3>
+        <div class="calendar-post-list" id="calendar-unscheduled-posts"></div>
+      </section>
+      <p class="calendar-notice" id="calendar-notice" role="status"></p>
+      <div class="dialog-actions">
+        <button class="dialog-secondary" type="button" data-close-dialog="calendar-dialog">關閉</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="app-dialog" id="import-dialog" aria-labelledby="import-title">
     <div class="dialog-card">
       <h2 class="dialog-title" id="import-title">貼回 AI 寫好的內容</h2>
@@ -1327,6 +1416,19 @@
       accountName: "❓待補",
     };
 
+    // 跟我的品牌沒關係的就刪掉；我自己的重要日子也加在這裡
+    const BIG_DAYS = [
+      { date: '2026-11-27', name: '黑色星期五' },
+      { date: '2026-12-12', name: '雙 12' },
+      { date: '2026-12-22', name: '冬至' },
+      { date: '2026-12-25', name: '聖誕節' },
+      { date: '2026-12-31', name: '跨年' },
+      { date: '2027-01-01', name: '元旦' },
+      // 品牌自己的重要日子範例，可換成你的日期與名稱。
+      { date: '2026-12-05', name: '七週年慶' },
+      { date: '2026-12-19', name: '聖誕禮盒開賣' }
+    ];
+
     const PLATFORMS = [
       { id: "facebook", label: "FB", promptLabel: "FB", maxCharacters: 220 },
       { id: "instagram", label: "IG", promptLabel: "IG", maxCharacters: 176 },
@@ -1360,6 +1462,15 @@
     const reviewDialog = document.getElementById("review-dialog");
     const promptDialog = document.getElementById("prompt-dialog");
     const savedPostsDialog = document.getElementById("saved-posts-dialog");
+    const calendarDialog = document.getElementById("calendar-dialog");
+    const calendarLineFriendsInput = document.getElementById("calendar-line-friends");
+    const calendarHasLine = PLATFORMS.some(({ id }) => id === "line");
+    const CALENDAR_LINE_FRIENDS_KEY = "corner-rice-social-workbench-line-friends";
+    let calendarMonth = new Date();
+    let calendarSelectedDate = "";
+    let calendarNoticeTimer;
+    let calendarNoticeVersion = 0;
+    const calendarTopicField = MATERIAL_FIELDS.find(field => field.id !== "date" && field.type !== "date");
     const savedPostsStatus = document.getElementById("saved-posts-status");
     const uploadSavedPostsButton = document.getElementById("upload-saved-posts");
     const downloadSavedPostsButton = document.getElementById("download-saved-posts");
@@ -1734,6 +1845,355 @@
       }).format(date);
     }
 
+    function calendarDateKey(date) {
+      return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+    }
+
+    function parseCalendarDate(key) {
+      if (typeof key !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return null;
+      const date = new Date(key + "T12:00:00");
+      return !Number.isNaN(date.getTime()) && calendarDateKey(date) === key ? date : null;
+    }
+
+    function formatCalendarDay(date) {
+      const weekday = "日一二三四五六"[date.getDay()];
+      return calendarDateKey(date).replaceAll("-", "/") + "（" + weekday + "）";
+    }
+
+    function hasCalendarDraft(post, id) {
+      const draft = post.drafts?.[id];
+      return typeof draft === "string" && Boolean(draft.trim());
+    }
+
+    function calendarPostDetails(post) {
+      const topic = post.materials?.[calendarTopicField?.id];
+      const title = typeof topic === "string" && topic.trim() ? topic.trim() : post.title || "未命名貼文";
+      const platforms = PLATFORMS.filter(({ id }) => hasCalendarDraft(post, id))
+        .map(({ label }) => label);
+      const missing = [];
+      if (!imageIds(post).length) missing.push("缺圖");
+      if (!platforms.length) missing.push("還沒寫");
+      return { post, title, platforms, missing };
+    }
+
+    function showCalendarNotice(message, failed = false) {
+      const notice = document.getElementById("calendar-notice");
+      clearTimeout(calendarNoticeTimer);
+      calendarNoticeVersion++;
+      notice.classList.toggle("error", failed);
+      notice.textContent = message;
+      if (message && !failed) {
+        calendarNoticeTimer = setTimeout(() => { notice.textContent = ""; }, 4500);
+      }
+    }
+
+    async function changeCalendarPostDate(id, key) {
+      const date = parseCalendarDate(key);
+      if (key && !date) {
+        showCalendarNotice("請輸入有效的日期", true);
+        return;
+      }
+      await imageStorageInitialization;
+      if (clearingLocalPosts || !calendarDialog.open) return;
+      const posts = readSavedPosts();
+      const post = posts.find(item => item.id === id);
+      if (!post || (post.publishDate || "") === key) return;
+
+      post.publishDate = key;
+      post.savedAt = Math.max(Date.now(), savedPostTime(post) + 1);
+      if (!writeSavedPosts(posts)) {
+        renderCalendar();
+        showCalendarNotice("無法儲存發佈日，請確認瀏覽器儲存空間", true);
+        return;
+      }
+
+      if (editingPostId === id) {
+        cur.publishDate = key;
+        publishDateInput.value = key;
+        saveAutoDraft();
+      }
+      renderCalendar();
+      showCalendarNotice(date ? "排到 " + formatCalendarDay(date) : "已拿掉日子");
+      if (sb && me) {
+        const noticeVersion = calendarNoticeVersion;
+        const error = await saveCloudPost(post);
+        if (error && calendarDialog.open && noticeVersion === calendarNoticeVersion) {
+          showCalendarNotice("日子已存到本機。" + cloudPostErrorMessage(error, true), true);
+        }
+      }
+    }
+
+    function renderCalendarPostList(id, entries, scheduled) {
+      const list = document.getElementById(id);
+      list.replaceChildren();
+      if (!entries.length) {
+        list.appendChild(makeElement("p", "calendar-empty", scheduled ? "這一天還沒有貼文。" : "每篇貼文都已排日子。"));
+        return;
+      }
+
+      for (const { post, title, platforms, missing } of entries) {
+        const row = makeElement("article", "calendar-post-row");
+        const details = makeElement("div", "calendar-post-details");
+        details.appendChild(makeElement("strong", "", title));
+        if (scheduled && platforms.length) {
+          details.appendChild(makeElement("p", "calendar-post-meta", platforms.join("・")));
+        }
+        if (missing.length) {
+          details.appendChild(makeElement("p", "calendar-missing", "⚠ " + missing.join("、")));
+        }
+
+        const actions = makeElement("div", "calendar-post-actions");
+        const open = makeElement("button", "dialog-secondary", "打開");
+        open.type = "button";
+        open.addEventListener("click", () => openSavedPost(post, calendarDialog));
+        if (scheduled) {
+          const input = makeElement("input", "calendar-date-input");
+          input.type = "date";
+          input.value = post.publishDate;
+          input.setAttribute("aria-label", title + "的預計發佈日");
+          input.addEventListener("change", () => {
+            if (!input.validity.badInput) changeCalendarPostDate(post.id, input.value);
+          });
+          const clear = makeElement("button", "dialog-secondary", "拿掉日子");
+          clear.type = "button";
+          clear.addEventListener("click", () => changeCalendarPostDate(post.id, ""));
+          actions.append(input, open, clear);
+        } else {
+          const schedule = makeElement("button", "dialog-secondary", "排到這一天");
+          schedule.type = "button";
+          schedule.addEventListener("click", () => {
+            if (!calendarSelectedDate) {
+              showCalendarNotice("先點月曆上的一天");
+              return;
+            }
+            changeCalendarPostDate(post.id, calendarSelectedDate);
+          });
+          actions.append(schedule, open);
+        }
+        row.append(details, actions);
+        list.appendChild(row);
+      }
+    }
+
+    function collectCalendarPosts() {
+      const postsByDate = new Map();
+      const unscheduled = [];
+
+      for (const post of readSavedPosts()) {
+        const entry = calendarPostDetails(post);
+        const key = post.publishDate;
+        if (!parseCalendarDate(key)) {
+          unscheduled.push(entry);
+          continue;
+        }
+
+        if (!postsByDate.has(key)) postsByDate.set(key, []);
+        postsByDate.get(key).push(entry);
+      }
+      return { postsByDate, unscheduled };
+    }
+
+    function calendarLineSummary(entries) {
+      const broadcasts = entries.filter(({ post }) => hasCalendarDraft(post, "line")).length;
+      const friends = calendarLineFriendsInput.valueAsNumber;
+      if (!Number.isSafeInteger(friends) || friends < 0) {
+        return { message: "LINE 群發 " + broadcasts + " 次。上面填 LINE 好友人數，就會算用掉幾則" };
+      }
+
+      const limit = 200;
+      const messages = broadcasts * friends;
+      const overLimit = messages > limit;
+      const remaining = Math.max(limit - messages, 0);
+      const message = "LINE 群發 " + broadcasts + " 次 × 好友 " + friends + " 人 ＝ " + messages +
+        " 則（免費方案一個月 " + limit + " 則，還剩 " + remaining + " 則）";
+      return { message: message + (overLimit ? " ⚠ 超過了，後面的會發不出去" : ""), warning: overLimit };
+    }
+
+    function calendarShortDate(date) {
+      return (date.getMonth() + 1) + "/" + date.getDate();
+    }
+
+    function longestCalendarGap(postsByDate, start, end) {
+      let run = 0;
+      let longest = 0;
+      let rangeStart;
+      let rangeEnd;
+      for (let day = start.getDate(); day <= end.getDate(); day++) {
+        const date = new Date(start.getFullYear(), start.getMonth(), day, 12);
+        run = postsByDate.has(calendarDateKey(date)) ? 0 : run + 1;
+        if (run > longest) {
+          longest = run;
+          rangeStart = new Date(start.getFullYear(), start.getMonth(), day - run + 1, 12);
+          rangeEnd = date;
+        }
+      }
+
+      const warning = longest >= 7;
+      const range = longest ? "（" + calendarShortDate(rangeStart) + "～" + calendarShortDate(rangeEnd) + "）" : "";
+      return { message: "最久連續 " + longest + " 天沒有貼文" + range + (warning ? " ⚠ 超過一週" : ""), warning };
+    }
+
+    function renderCalendarSummary({ postsByDate, unscheduled }) {
+      const year = calendarMonth.getFullYear();
+      const month = calendarMonth.getMonth();
+      const first = new Date(year, month, 1, 12);
+      const last = new Date(year, month + 1, 0, 12);
+      const today = calendarDateKey(new Date());
+      const firstKey = calendarDateKey(first);
+      const lastKey = calendarDateKey(last);
+      const monthEntries = [];
+      for (const [key, entries] of postsByDate) {
+        if (key >= firstKey && key <= lastKey) monthEntries.push(...entries);
+      }
+      const incomplete = monthEntries.filter(entry => entry.missing.length).length;
+
+      const summary = document.getElementById("calendar-summary");
+      summary.replaceChildren();
+      const addLine = (message, warning = false) => summary.appendChild(makeElement("p", warning ? "error" : "", message));
+      addLine("這個月排了 " + monthEntries.length + " 篇，還缺東西的 " + incomplete + " 篇，還沒排日子的 " + unscheduled.length + " 篇",
+        incomplete > 0 || unscheduled.length > 0);
+
+      if (calendarHasLine) {
+        const line = calendarLineSummary(monthEntries);
+        addLine(line.message, line.warning);
+      }
+
+      const startKey = today > firstKey ? today : firstKey;
+      if (startKey > lastKey) return;
+      const gap = longestCalendarGap(postsByDate, parseCalendarDate(startKey), last);
+      addLine(gap.message, gap.warning);
+
+      const events = BIG_DAYS.filter(event => event.date >= startKey && event.date <= lastKey)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      for (const event of events) {
+        const date = parseCalendarDate(event.date);
+        if (!date) continue;
+        let count = 0;
+        for (let offset = 0; offset <= 7; offset++) {
+          const day = new Date(date.getFullYear(), date.getMonth(), date.getDate() - offset, 12);
+          count += postsByDate.get(calendarDateKey(day))?.length || 0;
+        }
+        const label = calendarShortDate(date) + " " + event.name;
+        addLine(count ? "✅ " + label + "：前面排了 " + count + " 篇"
+          : "⚠ " + label + "：當天和前 7 天都沒有貼文", count === 0);
+      }
+    }
+
+    function renderCalendar() {
+      const year = calendarMonth.getFullYear();
+      const month = calendarMonth.getMonth();
+      const firstDay = new Date(year, month, 1, 12);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const cellCount = Math.ceil((firstDay.getDay() + daysInMonth) / 7) * 7;
+      const today = calendarDateKey(new Date());
+      const { postsByDate, unscheduled } = collectCalendarPosts();
+      const bigDayNames = new Map();
+      for (const { date, name } of BIG_DAYS) {
+        if (!bigDayNames.has(date)) bigDayNames.set(date, []);
+        bigDayNames.get(date).push(name);
+      }
+
+      document.getElementById("calendar-month").textContent = year + " 年 " + (month + 1) + " 月";
+      const body = document.getElementById("calendar-days");
+      body.replaceChildren();
+      for (let offset = 0; offset < cellCount; offset += 7) {
+        const row = document.createElement("tr");
+        for (let weekday = 0; weekday < 7; weekday++) {
+          const date = new Date(year, month, 1 - firstDay.getDay() + offset + weekday, 12);
+          const key = calendarDateKey(date);
+          const bigDay = bigDayNames.get(key)?.join("、") || "";
+          const cell = makeElement("td", "calendar-day");
+          cell.classList.toggle("big-day", Boolean(bigDay));
+          cell.classList.toggle("outside-month", date.getMonth() !== month);
+          cell.classList.toggle("selected", key === calendarSelectedDate);
+          const number = makeElement("span", "calendar-day-number", String(date.getDate()));
+          const select = makeElement("button", "calendar-select-day");
+          select.type = "button";
+          select.dataset.date = key;
+          select.setAttribute("aria-label", bigDay ? formatCalendarDay(date) + " " + bigDay : formatCalendarDay(date));
+          select.setAttribute("aria-pressed", String(key === calendarSelectedDate));
+          if (key === today) {
+            number.classList.add("today");
+            select.setAttribute("aria-current", "date");
+          }
+          const heading = makeElement("div", "calendar-day-heading");
+          heading.appendChild(number);
+          if (bigDay) heading.appendChild(makeElement("span", "calendar-big-day-name", bigDay));
+          cell.append(heading, select);
+          for (const { title, missing } of postsByDate.get(key) || []) {
+            const tag = makeElement("div", "calendar-post", missing.length ? "⚠ " + title : title);
+            tag.title = title;
+            if (missing.length) tag.classList.add("incomplete");
+            cell.appendChild(tag);
+          }
+          row.appendChild(cell);
+        }
+        body.appendChild(row);
+      }
+
+      const selectedDate = parseCalendarDate(calendarSelectedDate);
+      document.getElementById("calendar-selected-day").hidden = !selectedDate;
+      const selectedTitle = document.getElementById("calendar-selected-title");
+      const selectedNames = bigDayNames.get(calendarSelectedDate);
+      selectedTitle.textContent = selectedDate ? formatCalendarDay(selectedDate) : "";
+      if (selectedNames) selectedTitle.appendChild(makeElement("span", "calendar-big-day-name", "　" + selectedNames.join("、")));
+      renderCalendarPostList("calendar-selected-posts", postsByDate.get(calendarSelectedDate) || [], true);
+      document.getElementById("calendar-unscheduled-title").textContent = "還沒排日子（" + unscheduled.length + " 篇）";
+      renderCalendarPostList("calendar-unscheduled-posts", unscheduled, false);
+      renderCalendarSummary({ postsByDate, unscheduled });
+    }
+
+    function showCalendarMonth(month) {
+      calendarMonth = month;
+      calendarSelectedDate = "";
+      showCalendarNotice("");
+      renderCalendar();
+    }
+
+    if (calendarHasLine) {
+      document.getElementById("calendar-line-setting").hidden = false;
+      calendarLineFriendsInput.addEventListener("input", () => {
+        const friends = calendarLineFriendsInput.valueAsNumber;
+        try {
+          if (!calendarLineFriendsInput.value && !calendarLineFriendsInput.validity.badInput) {
+            localStorage.removeItem(CALENDAR_LINE_FRIENDS_KEY);
+          } else if (Number.isSafeInteger(friends) && friends >= 0) {
+            localStorage.setItem(CALENDAR_LINE_FRIENDS_KEY, String(friends));
+          }
+        } catch {
+          showCalendarNotice("無法記住 LINE 好友人數，請確認瀏覽器儲存空間", true);
+        }
+        renderCalendarSummary(collectCalendarPosts());
+      });
+    }
+
+    document.getElementById("open-calendar").addEventListener("click", () => {
+      if (calendarHasLine) {
+        try {
+          calendarLineFriendsInput.value = localStorage.getItem(CALENDAR_LINE_FRIENDS_KEY) ?? "";
+        } catch {
+          calendarLineFriendsInput.value = "";
+        }
+      }
+      showCalendarMonth(new Date());
+      calendarDialog.showModal();
+    });
+    document.getElementById("calendar-previous").addEventListener("click", () => {
+      showCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1, 12));
+    });
+    document.getElementById("calendar-next").addEventListener("click", () => {
+      showCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1, 12));
+    });
+    document.getElementById("calendar-today").addEventListener("click", () => showCalendarMonth(new Date()));
+    document.getElementById("calendar-days").addEventListener("click", event => {
+      const button = event.target.closest(".calendar-select-day");
+      if (!button) return;
+      calendarSelectedDate = button.dataset.date;
+      showCalendarNotice("");
+      renderCalendar();
+      document.querySelector('.calendar-select-day[aria-pressed="true"]').focus({ preventScroll: true });
+    });
+
     function savedPostTime(post) {
       if (post.savedAt != null && post.savedAt !== "") {
         const time = new Date(post.savedAt).getTime();
@@ -1919,6 +2379,7 @@
           cloudSaveStatus.classList.add("error");
           cloudSaveStatus.textContent = `${cloudPostErrorMessage(error, true)}。這台電腦有存到，不會不見`;
         }
+        return error;
       }
     }
 
@@ -1992,6 +2453,7 @@
         throw new Error("本機存檔失敗，請確認瀏覽器儲存空間");
       }
       updateWarehouseMeter();
+      if (calendarDialog.open) renderCalendar();
       return `拿回來了：新增 ${added} 篇、更新 ${updated} 篇`;
     }
 
@@ -2076,16 +2538,21 @@
     uploadSavedPostsButton.addEventListener("click", () => syncSavedPosts("upload"));
     downloadSavedPostsButton.addEventListener("click", () => syncSavedPosts("download"));
 
+    function openSavedPost(post, dialog) {
+      if (!imageStorageReady || clearingLocalPosts) return;
+      clearCloudSaveStatus();
+      applyPostState(post);
+      document.getElementById("save-status").textContent = "";
+      dialog.close();
+    }
+
     document.getElementById("saved-post-list").addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-action]");
       if (!button) return;
       const post = readSavedPosts().find((savedPost) => savedPost.id === button.dataset.postId);
       if (!post) return;
       if (button.dataset.action === "open") {
-        clearCloudSaveStatus();
-        applyPostState(post);
-        document.getElementById("save-status").textContent = "";
-        savedPostsDialog.close();
+        openSavedPost(post, savedPostsDialog);
         return;
       }
       if (button.dataset.action !== "delete" || savedPostsBusy) return;
@@ -2642,7 +3109,7 @@
       button.addEventListener("click", () => document.getElementById(button.dataset.closeDialog).close());
     });
 
-    [settingsDialog, promptDialog, savedPostsDialog, importDialog, reviewDialog, authDialog].forEach((dialog) => {
+    [settingsDialog, promptDialog, savedPostsDialog, calendarDialog, importDialog, reviewDialog, authDialog].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) dialog.close();
       });
