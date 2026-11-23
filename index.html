@@ -1871,7 +1871,8 @@
       const platforms = PLATFORMS.filter(({ id }) => hasCalendarDraft(post, id))
         .map(({ label }) => label);
       const missing = [];
-      if (!imageIds(post).length) missing.push("缺圖");
+      const pictureCount = post.id === editingPostId ? pictures.length : imageIds(post).length;
+      if (!pictureCount) missing.push("缺圖");
       if (!platforms.length) missing.push("還沒寫");
       return { post, title, platforms, missing };
     }
@@ -3215,7 +3216,12 @@
         item.append(select, remove); grid.append(item);
       });
     }
-    function refreshPictures() { renderPictures(); renderPreview(); saveAutoDraft(); }
+    function refreshPictures() {
+      renderPictures();
+      renderPreview();
+      saveAutoDraft();
+      if (calendarDialog.open && editingPostId) renderCalendar();
+    }
     async function shrinkPicture(file) {
       if (!imageStorageReady) throw new Error("圖片倉庫尚未就緒");
       const url = URL.createObjectURL(file);
